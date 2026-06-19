@@ -9,6 +9,8 @@
 > **Cómo leerlo.** Despacio y con las manos. Escribe el código, córrelo, cámbiale números, rómpelo. Un algoritmo no se entiende leyéndolo: se entiende **trazándolo a mano** una vez. Hay cajas "✍️ Traza a mano" justo para eso.
 >
 > **Idioma:** Java para el código (tu base). Los conceptos son idénticos en cualquier lenguaje.
+>
+> **Dónde encaja este documento.** Es el **companion de profundidad** del *track de carrera* `Guía-Estudio-Entrevistas-SDET-2026.md` (raíz del repo): su **Apéndice A — Playbook de Algoritmos** es el mapa de los ~15 patrones; este manual es donde cada patrón se *enseña* a fondo. Si vienes del playbook buscando profundidad, llegaste al lugar correcto. Ver también el [Índice Maestro](../INDICE-MAESTRO.md).
 
 ---
 
