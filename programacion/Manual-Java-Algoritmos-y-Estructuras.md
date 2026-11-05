@@ -37,7 +37,7 @@
 - 🕸️ Algoritmos de grafos con nombre (Dijkstra, orden topológico, Union-Find y referencia de otros)
 
 **PARTE 4 — BANCO DE PREGUNTAS (estilo tutor)**
-- 4.1 Fundamentos y Big-O · 4.2 Estructuras de datos (conceptuales) · 4.3 Problemas de código por patrón (~33 resueltos) · 4.4 Preguntas verbales / de comunicación
+- 4.1 Fundamentos y Big-O · 4.2 Estructuras de datos (conceptuales) · 4.3 Problemas de código por patrón (~33 problemas, todos resueltos a código) · 4.4 Preguntas verbales / de comunicación
 
 **PARTE 5 — HOJAS DE REFERENCIA RÁPIDA**
 
@@ -49,6 +49,8 @@
 ---
 
 # PRELIMINAR — MENTALIDAD DE ENTREVISTA Y MAPA DE APRENDIZAJE
+
+> 🔰 **Si nunca has programado, lee esto primero.** Este preliminar es solo un **vistazo de motivación**: aparecen términos como *Big-O*, *HashMap*, *ventana deslizante*, *backtracking* o *log n* que **todavía no se han explicado**. No entenderlos ahora es completamente normal — **todos se enseñan desde cero a partir del Capítulo 0**. Puedes **saltar directo al [Capítulo 0](#capítulo-0--java-desde-cero-la-base-de-todo-el-manual)** y volver aquí cuando ya tengas las bases; este preliminar cobrará pleno sentido entonces.
 
 ## M.1 Por qué los algoritmos deciden tu entrevista
 
@@ -148,6 +150,8 @@ No memorices la lista: **velos funcionando**.
 
 **Rasgo 1 — Orientado a objetos.** Java organiza todo en **objetos** (cosas con datos y comportamientos). No hay código "suelto"; todo vive dentro de clases. Un programa completo que lo muestra:
 ```java
+// archivo: Perro.java  (el nombre del archivo debe coincidir con la clase pública;
+//                       cómo nombrar, compilar y correr el archivo se explica en §0.2)
 public class Perro {
     String nombre;                              // dato (estado)
     void ladrar() {                             // comportamiento
@@ -446,7 +450,7 @@ public class Imprimir {
 // Sin salto. Misma línea.
 // Hola Ana, tienes 30 años.
 ```
-🔧 **Secuencias de escape** (caracteres especiales dentro de un texto): `\n` salto de línea, `\t` tabulación, `\"` comilla doble literal, `\\` barra invertida. En `printf`, `%s` inserta un String, `%d` un entero, `%f` un decimal, `%n` un salto de línea portable.
+🔧 **Secuencias de escape** (caracteres especiales dentro de un texto): `\n` salto de línea, `\t` tabulación, `\"` comilla doble literal, `\'` comilla simple literal (útil dentro de un `char`, p. ej. `char c = '\'';`), `\r` retorno de carro (mueve el cursor al inicio de la línea sin bajar; en Windows el fin de línea real es `\r\n`), `\\` barra invertida. En `printf`, `%s` inserta un String, `%d` un entero, `%f` un decimal, `%n` un salto de línea portable.
 
 ### 0.2.4 Leer datos del usuario (programas interactivos) con `Scanner`
 
@@ -465,13 +469,46 @@ public class Saludo {
         sc.close();
     }
 }
-// Si el usuario escribe "Alberto" y luego 34:
-// Salida:
-// ¿Cómo te llamas? Alberto
-// ¿Cuántos años tienes? 34
+// Salida en consola (lo que aparece en ⟨⟩ es lo que TÚ escribes; el resto lo imprime el programa):
+// ¿Cómo te llamas? ⟨Alberto⟩
+// ¿Cuántos años tienes? ⟨34⟩
 // Hola Alberto, el próximo año tendrás 35
 ```
-🔑 Métodos de `Scanner`: `nextLine()` (una línea de texto), `nextInt()` (entero), `nextDouble()` (decimal), `next()` (una palabra). ⚠️ Mezclar `nextInt()` con `nextLine()` causa un bug famoso (el `nextInt` deja un salto de línea pendiente); por ahora, usa uno u otro de forma consistente.
+> 📐 **Convención de este manual para programas interactivos:** en la "Salida" de cualquier ejemplo que lea del teclado, **lo que aparece entre `⟨` y `⟩` es lo que TÚ tecleas** (y confirmas con Enter); todo lo demás lo **imprime el programa**. Así no confundes tu entrada con la salida del programa — en la consola real ambas se mezclan en la misma pantalla.
+
+🔑 Métodos de `Scanner`: `nextLine()` (una línea de texto, incluidos espacios), `nextInt()` (entero), `nextDouble()` (decimal), `next()` (una palabra suelta).
+
+⚠️ **El bug clásico: mezclar `nextInt()` y luego `nextLine()`.** Cuando tecleas `34` y pulsas Enter, en el buffer de entrada quedan dos cosas: el número `34` **y** el salto de línea (`\n`) del Enter. `nextInt()` consume el `34` pero **deja el `\n` pendiente**. Si justo después llamas a `nextLine()`, este lee ese `\n` sobrante y **devuelve una cadena vacía `""`** sin darte tiempo a escribir — parece que el programa "se saltó" tu entrada.
+```java
+import java.util.Scanner;
+
+public class BugScanner {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Edad: ");
+        int edad = sc.nextInt();          // lee 34, pero deja el \n pendiente
+        System.out.print("Ciudad: ");
+        String ciudad = sc.nextLine();    // ❌ lee el \n sobrante -> ciudad = ""
+        System.out.println("[" + edad + "] [" + ciudad + "]");
+        sc.close();
+    }
+}
+// Salida (SÍNTOMA del bug):
+// Edad: ⟨34⟩
+// Ciudad: [34] []        <- ¡ni siquiera te dejó escribir la ciudad! ciudad quedó vacía
+```
+✅ **La corrección:** agrega un `sc.nextLine()` extra **después** del `nextInt()` para consumir ese `\n` pendiente, antes de leer la línea de texto que sí te interesa:
+```java
+        int edad = sc.nextInt();
+        sc.nextLine();                    // ✅ "limpia" el \n pendiente
+        System.out.print("Ciudad: ");
+        String ciudad = sc.nextLine();    // ahora SÍ espera tu texto
+// Salida corregida:
+// Edad: ⟨34⟩
+// Ciudad: ⟨Monterrey⟩
+// [34] [Monterrey]
+```
+🔑 Regla simple para recordarlo: **`nextInt()`/`nextDouble()`/`next()` no consumen el Enter; `nextLine()` sí.** Si vas a leer una línea de texto justo después de leer un número, intercala un `sc.nextLine()` de limpieza.
 
 ### 0.2.5 Comentarios (notas para humanos, ignoradas por el compilador)
 
@@ -537,7 +574,10 @@ Error1.java:3: error: ';' expected
 >         sc.close();
 >     }
 > }
-> // Con 7 y 5 -> Suma: 12
+> // Salida (lo de ⟨⟩ lo tecleas tú):
+> // Primer número: ⟨7⟩
+> // Segundo número: ⟨5⟩
+> // Suma: 12
 > ```
 
 **Ejercicio 4.** Este código no compila. ¿Por qué y cómo lo arreglas?
@@ -565,7 +605,9 @@ Error1.java:3: error: ';' expected
 >         sc.close();
 >     }
 > }
-> // Con "Ana" -> Hola:    Ana
+> // Salida (lo de ⟨⟩ lo tecleas tú):
+> // Nombre: ⟨Ana⟩
+> // Hola:    Ana
 > ```
 
 ---
@@ -621,6 +663,42 @@ public class Overflow {
 // -2147483648
 ```
 🔑 Por eso, para contar cosas muy grandes (o sumar muchos enteros), a veces necesitas `long`. En algoritmos, este detalle evita bugs sutiles.
+
+⚠️ **Trampa de entrevista (a): la aritmética con `byte`/`short` se PROMUEVE a `int`.** Cuando operas dos `byte` (o dos `short`), Java los **convierte a `int` antes de sumar**, y el resultado es un `int`. Por eso esto **no compila** aunque los números sean pequeños:
+```java
+public class PromocionByte {
+    public static void main(String[] args) {
+        byte a = 10, b = 20;
+        // byte c = a + b;        // ❌ NO COMPILA: a + b es un int, no cabe "a ciegas" en byte
+        byte c = (byte)(a + b);   // ✅ con cast explícito sí: c = 30
+        System.out.println(c);
+
+        // byte malo = 200;       // ❌ NO COMPILA: 200 está fuera del rango byte (−128..127)
+        byte ok = (byte) 200;     // con cast sí compila, pero "da la vuelta": queda -56
+        System.out.println(ok);
+    }
+}
+// El compilador (javac) sobre las líneas comentadas diría:
+// error: incompatible types: possible lossy conversion from int to byte
+// Salida del programa tal cual está:
+// 30
+// -56
+```
+🔑 La regla: **toda operación aritmética con tipos más pequeños que `int` da un `int`**; para guardarlo de vuelta en `byte`/`short` necesitas un cast explícito `(byte)(...)`, asumiendo el riesgo de desbordamiento. Y un **literal** que no cabe en el tipo (`byte b = 200;`) tampoco compila.
+
+⚠️ **Trampa de entrevista (b): `double`/`float` NO son exactos para decimales.** Se guardan en binario (estándar IEEE 754), y muchos decimales "redondos" en base 10 no tienen representación exacta en base 2 — igual que `1/3` no tiene representación decimal exacta. El caso famoso:
+```java
+public class Precision {
+    public static void main(String[] args) {
+        System.out.println(0.1 + 0.2);          // NO da 0.3
+        System.out.println(0.1 + 0.2 == 0.3);   // por eso esto es false
+    }
+}
+// Salida:
+// 0.30000000000000004
+// false
+```
+🔑 Consecuencias prácticas: **nunca compares decimales con `==`** (compara que la diferencia sea menor a un `epsilon` pequeño, p. ej. `Math.abs(x - y) < 1e-9`), y **para dinero NUNCA uses `double`/`float`** — usa `java.math.BigDecimal` (con `String` en el constructor: `new BigDecimal("0.1")`), que es exacto en base 10. Sumar centavos mal redondeados es un bug clásico en sistemas financieros.
 
 ### 0.3.3 Los tipos de REFERENCIA y el modelo de memoria
 
@@ -800,6 +878,33 @@ public class Aritmetica {
 ```
 ⚠️ **La trampa clave — división entera:** `int / int` da `int` y **trunca** el decimal. Para decimales, al menos un operando debe ser `double` (`7.0 / 2`).
 
+⚠️ **División por cero (pregunta de entrevista clásica): se comporta distinto en enteros y en decimales.**
+```java
+public class DividirPorCero {
+    public static void main(String[] args) {
+        System.out.println(5 / 0);       // ❌ entero: LANZA excepción en tiempo de ejecución
+        // las líneas siguientes NO se ejecutan porque la de arriba ya tumbó el programa
+        System.out.println(5.0 / 0);     // decimal: Infinity
+        System.out.println(-5.0 / 0);    // decimal: -Infinity
+        System.out.println(0.0 / 0.0);   // decimal: NaN (Not a Number)
+    }
+}
+// Salida (al ejecutar solo la primera línea):
+// Exception in thread "main" java.lang.ArithmeticException: / by zero
+//     at DividirPorCero.main(DividirPorCero.java:3)
+```
+Si comentas la primera línea para ver el resto:
+```java
+        System.out.println(5.0 / 0);     // 5.0 es double -> NO lanza excepción
+        System.out.println(-5.0 / 0);
+        System.out.println(0.0 / 0.0);
+// Salida:
+// Infinity
+// -Infinity
+// NaN
+```
+🔑 La regla mental: **dividir un entero entre cero LANZA `ArithmeticException` (`/ by zero`)** y tumba el programa; **dividir un decimal (`double`/`float`) entre cero NO lanza nada**: da `Infinity`, `-Infinity` o, en el caso `0.0/0.0`, `NaN` ("no es un número"). Dato extra: `NaN` es tan raro que `NaN == NaN` da **`false`**; para detectarlo se usa `Double.isNaN(x)`.
+
 🔑 **El módulo `%` es oro en algoritmos:**
 - `n % 2 == 0` → ¿es par?
 - `n % 10` → el último dígito de `n`.
@@ -908,7 +1013,14 @@ int mayor = (a > b) ? a : b;   // mayor = 7
 | `^` | XOR | 1 si los bits **difieren** |
 | `~` | NOT | invierte todos los bits |
 | `<<` | desplazar a la izquierda | `x << 1` = multiplicar por 2 |
-| `>>` | desplazar a la derecha | `x >> 1` = dividir entre 2 |
+| `>>` | desplazar a la derecha (con signo) | divide entre 2 **redondeando hacia abajo** (ver ⚠️ abajo) |
+| `>>>` | desplazar a la derecha **sin signo** | rellena con `0` por la izquierda (no respeta el signo) |
+
+⚠️ **`>>` NO es exactamente "dividir entre 2" para negativos.** Es un desplazamiento *aritmético*: conserva el bit de signo y redondea hacia −∞, no hacia cero. Para positivos coincide con `/2` (`20 >> 1` = 10), pero `-3 >> 1` da **−2**, mientras que `-3 / 2` da **−1**. Si quieres división entera real usa `/`; usa `>>` solo cuando sepas que trabajas con no-negativos.
+
+🔑 **`>>>` (sin signo) es el operador estrella en entrevistas.** El bug clásico de la búsqueda binaria, `int medio = (izq + der) / 2;`, desborda cuando `izq + der` supera `Integer.MAX_VALUE` (la suma se vuelve negativa). La forma a prueba de overflow es `int medio = (izq + der) >>> 1;`: como `>>>` no respeta el signo, trata el resultado como un número sin signo de 32 bits y divide entre 2 correctamente aunque la suma "se haya pasado". Verás esta línea exacta en código profesional (es la que usa la propia librería de Java en `Arrays.binarySearch`).
+
+⚠️ **Trampa de quien viene de matemáticas o Python:** en Java `^` es XOR de bits, **no** "elevar a potencia" (eso es `Math.pow(base, exp)`). Y `&`/`|` (un solo símbolo) son bit a bit; `&&`/`||` (doble) son lógicos. Confundirlos compila pero da resultados absurdos.
 
 🔑 **El truco del XOR** (pregunta clásica): `a ^ a == 0` y `a ^ 0 == a`. Por eso, si en un arreglo todos los números están **dos veces menos uno**, hacer XOR de todos deja **el único que aparece una vez** (los pares se cancelan):
 ```java
@@ -923,7 +1035,7 @@ public class XOR {
 // Salida:
 // 4
 ```
-🔑 También: `x << 1` duplica (`5 << 1` = 10) y `x >> 1` divide entre 2 (`20 >> 1` = 10) — útil en heaps (índices de hijos) y optimizaciones.
+🔑 También: `x << 1` duplica (`5 << 1` = 10) y `x >> 1` divide entre 2 para no-negativos (`20 >> 1` = 10) — útil en heaps (índices de hijos) y optimizaciones. Recuerda el matiz de los negativos y el uso de `>>>` en búsqueda binaria (arriba).
 
 ### 0.4.8 Precedencia (quién va primero)
 
@@ -945,7 +1057,7 @@ De mayor a menor prioridad (resumen práctico): `()` → `! ++ --` → `* / %` �
 >         sc.close();
 >     }
 > }
-> // Con 8 -> par ; con 7 -> impar
+> // (lo de ⟨⟩ lo tecleas tú)  con ⟨8⟩ -> par ; con ⟨7⟩ -> impar
 > ```
 
 **Ejercicio 3.** Explica por qué `if (lista != null && !lista.isEmpty())` es seguro.
@@ -992,6 +1104,21 @@ public class Notas {
 // Aprobado
 ```
 🔑 **El orden importa:** Java entra en el **primer** `if` verdadero e ignora el resto. Por eso el caso más restrictivo va primero (lo viste en FizzBuzz). ⚠️ Sin llaves, el `if` solo controla la **siguiente** línea; usa `{ }` siempre para evitar bugs.
+
+⚠️ **El error de `=` en vez de `==` (clásico de quien viene de C).** En Java, `if (...)` exige una expresión **`boolean`**. Como `=` es asignación (no comparación) y devuelve el valor asignado, escribir `if (x = 5)` con un entero **NO compila** — Java te protege:
+```java
+int x = 0;
+// if (x = 5) { ... }   // ❌ NO COMPILA: incompatible types: int cannot be converted to boolean
+if (x == 5) { /* ... */ }   // ✅ comparación correcta
+```
+🔑 En C ese mismo `if (x = 5)` compila y siempre es "verdadero" (un bug silencioso muy famoso); en Java el compilador lo atrapa. **El único caso peligroso en Java es con `boolean`:** `if (b = true)` SÍ compila (asignar `true` da un `boolean`), pero **reasigna** `b` a `true` en lugar de compararlo — un bug silencioso. La defensa: compara contra constantes al revés cuando dudes, o mejor aún, con un `boolean` escribe solo `if (b)` (no `if (b == true)`):
+```java
+boolean activo = false;
+if (activo = true) {            // ⚠️ COMPILA pero está MAL: pone activo=true y siempre entra
+    System.out.println("entré por error");
+}
+// Salida: entré por error      <- el bug: nunca era true, pero lo volvimos true al asignar
+```
 
 ### 0.5.2 `switch` (elegir entre valores fijos)
 
@@ -1123,6 +1250,39 @@ public class Anidados {
 ```
 🔑 *Las repeticiones se **multiplican**: 3×3 = 9. Dos bucles anidados sobre `n` → n×n = **O(n²)**.* Esta es la conexión que más usarás al analizar algoritmos.
 
+**`break`/`continue` con etiqueta (salir de DOS bucles a la vez).** Un `break` normal solo sale del bucle **más interno**. ¿Y si encuentras lo que buscabas y quieres salir de los dos? Java permite ponerle una **etiqueta** (un nombre seguido de `:`) al bucle externo y hacer `break etiqueta;`:
+```java
+public class BreakConEtiqueta {
+    public static void main(String[] args) {
+        int objetivo = 5;
+        busqueda:                                   // etiqueta del bucle externo
+        for (int i = 1; i <= 3; i++) {
+            for (int j = 1; j <= 3; j++) {
+                System.out.println("probando " + i + "," + j);
+                if (i * j == objetivo) {            // 5 no es producto; usemos otro caso
+                    break busqueda;
+                }
+                if (i + j == objetivo) {            // 2+3 = 5: ¡encontrado!
+                    System.out.println("encontrado en " + i + "," + j);
+                    break busqueda;                 // sale de AMBOS bucles de golpe
+                }
+            }
+        }
+        System.out.println("fin");
+    }
+}
+// Salida:
+// probando 1,1
+// probando 1,2
+// probando 1,3
+// probando 2,1
+// probando 2,2
+// probando 2,3
+// encontrado en 2,3
+// fin
+```
+🔑 De forma análoga, `continue etiqueta;` salta a la siguiente vuelta del bucle **etiquetado** (el externo), no del interno. ⚠️ Úsalo con mesura: en código real suele preferirse extraer la búsqueda a un método y usar `return`, que es más legible. Pero **`break etiqueta;` es la respuesta a la pregunta "¿cómo salgo de dos bucles anidados a la vez?"** — aparece en entrevistas y en algoritmos de matrices/cuadrículas.
+
 ### 0.5.9 Ejercicios resueltos
 
 **Ejercicio 1.** Imprime los números del 1 al 10 con un `for`.
@@ -1176,7 +1336,7 @@ public class Anidados {
 >         sc.close();
 >     }
 > }
-> // Con 3, 4, 5, 0 -> Suma: 12
+> // (lo de ⟨⟩ lo tecleas tú)  con ⟨3⟩ ⟨4⟩ ⟨5⟩ ⟨0⟩ -> Suma: 12
 > ```
 
 **Ejercicio 7.** Imprime solo los números impares del 1 al 20 usando `continue`.
@@ -1313,7 +1473,33 @@ public class PorValorObjetos {
 // 999
 // 999
 ```
-🔑 Resumen: puedes **modificar** el objeto compartido, pero no **reapuntar** la variable del que llama.
+✍️ **Traza a mano** — la clave es que la **flecha (referencia) se copia**, pero el **objeto al final de la flecha es uno solo**:
+
+```
+PASO 1 — antes de llamar:
+   x ─────► [1, 2, 3]          (x apunta al arreglo en memoria)
+
+PASO 2 — modificar(x): se COPIA la flecha al parámetro 'arr'
+   x ───┐
+        ├──► [1, 2, 3]         (x y arr apuntan al MISMO arreglo)
+ arr ───┘
+   arr[0] = 999  ► toca el objeto compartido:
+   x ───┐
+        ├──► [999, 2, 3]       (x VE el cambio: misma caja)
+ arr ───┘
+   ⇒ de vuelta en main: x[0] == 999   ✅ SÍ afectó
+
+PASO 3 — reasignar(x): otra vez se copia la flecha
+   x ───┐
+        ├──► [999, 2, 3]
+ arr ───┘
+   arr = new int[]{-1}  ► solo la COPIA local cambia de flecha:
+   x ──────► [999, 2, 3]       (x sigue en su caja original)
+ arr ─────► [-1]               (arr apunta a OTRA caja nueva)
+   ⇒ de vuelta en main: x[0] == 999   ❌ reasignar NO afectó a x
+```
+
+🔑 Resumen: puedes **modificar** el objeto compartido (escribes dentro de la caja que ambos comparten), pero no **reapuntar** la variable del que llama (mover su flecha): reasignar solo cambia la flecha de la **copia local**, que muere al terminar el método.
 
 ### 0.6.7 Métodos con argumentos variables (varargs)
 
@@ -1334,6 +1520,7 @@ public class Varargs {
 // 6
 // 100
 ```
+🔧 **Reglas de varargs:** (1) el parámetro `...` debe ir **último** en la lista (`metodo(String etiqueta, int... nums)` ✅; `metodo(int... nums, String etiqueta)` ❌); (2) solo puede haber **uno** por método; (3) internamente **es un arreglo** (`int...` se maneja como `int[]`: lo recorres con `for`, le pides `.length`, etc.). Puedes incluso llamarlo sin argumentos (`sumarTodos()` → recibe un arreglo vacío, devuelve 0).
 
 ### 0.6.8 Recursión: un método que se llama a sí mismo (puente al Patrón 5)
 
@@ -1352,6 +1539,24 @@ public class Factorial {
 // 24
 ```
 ✍️ **Traza** de `factorial(4)`: `4*factorial(3)` → `3*factorial(2)` → `2*factorial(1)` → `1` (base). Se "desenrolla": 2*1=2, 3*2=6, 4*6=**24**. ⚠️ Sin caso base (o uno inalcanzable) → `StackOverflowError` (la pila de llamadas se llena, §0.1.5). Lo profundizas en el Patrón 5.
+
+⚠️ **Errores comunes de métodos** (los verás en el compilador una y otra vez):
+
+- **`missing return statement`** — un método con tipo de retorno (no `void`) tiene un camino que **no** llega a un `return`. Típico al poner el `return` solo dentro de un `if` sin cubrir el `else`:
+  ```java
+  static int signo(int n) {
+      if (n >= 0) return 1;     // ❌ ¿y si no entra al if? falta un return
+  }                             // -> error: missing return statement
+  ```
+  *Arreglo:* asegúrate de que **todos** los caminos devuelvan algo (añade un `return -1;` al final).
+- **`non-static method ... cannot be referenced from a static context`** — intentas llamar un método **de instancia** desde uno `static` (como `main`) sin crear un objeto. `main` es `static` y no "vive" en ningún objeto, así que no puede llamar directo a métodos de instancia:
+  ```java
+  void saludar() { System.out.println("hola"); }   // de instancia
+  public static void main(String[] a) {
+      saludar();                 // ❌ non-static ... from a static context
+  }
+  ```
+  *Arreglo:* o creas el objeto (`new MiClase().saludar();`) o haces el método `static` si no usa estado del objeto.
 
 ### 0.6.9 Por qué importan para SDET
 
@@ -1452,6 +1657,39 @@ public class Coche {
     int velocidad;
 }
 ```
+
+🔧 **Valores por defecto de los atributos (campo no inicializado):** un atributo que no inicializas **no queda con basura** — Java le da un **valor por defecto** automáticamente al crear el objeto. Esto es lo que explica que, más adelante, un `Coche` recién creado imprima `velocidad=0` aunque nunca le asignaste nada.
+
+| Tipo del atributo | Valor por defecto |
+|---|---|
+| `int`, `long`, `short`, `byte` | `0` |
+| `double`, `float` | `0.0` |
+| `boolean` | `false` |
+| `char` | `' '` (carácter nulo) |
+| cualquier objeto/arreglo (`String`, `int[]`, …) | `null` |
+
+```java
+public class Defaults {
+    int numero;        // queda en 0
+    boolean activo;    // queda en false
+    String texto;      // queda en null
+    public static void main(String[] args) {
+        Defaults d = new Defaults();
+        System.out.println(d.numero + " " + d.activo + " " + d.texto);
+    }
+}
+// Salida:
+// 0 false null
+```
+
+⚠️ **Contraste con las variables LOCALES (dentro de un método): NO reciben valor por defecto.** El compilador te **obliga** a inicializarlas antes de usarlas, o no compila:
+```java
+public static void main(String[] args) {
+    int x;
+    System.out.println(x);   // ❌ NO COMPILA: "variable x might not have been initialized"
+}
+```
+🔑 Regla mental (y **pregunta de entrevista clásica**): **los atributos sí tienen valor por defecto; las variables locales no.** Java protege contra leer una variable local con basura forzándote a inicializarla; los atributos, en cambio, se inicializan a un valor neutro conocido cuando nace el objeto.
 
 ### 0.7.4 Crear objetos: `new`, constructor, `this`, y constructores múltiples
 
@@ -1652,14 +1890,18 @@ public class CuentaBancaria {
 // 70.0
 ```
 
-🔧 **Modificadores de acceso** (quién ve cada cosa), de más a menos abierto:
+🔧 **Modificadores de acceso** (quién ve cada cosa), **de más a menos abierto**:
 
 | Modificador | Visible desde |
 |---|---|
 | `public` | cualquier lugar |
-| `protected` | misma clase + subclases + mismo paquete |
+| `protected` | mismo paquete **+ subclases** (incluso de otro paquete) |
 | *(nada / default)* | solo el mismo paquete |
 | `private` | solo dentro de la misma clase |
+
+🔑 **El orden correcto, de más abierto a más cerrado, es `public` → `protected` → default (sin modificador) → `private`.** El detalle clave: `protected` es **más abierto** que default, porque añade lo que ve default (todo el paquete) **el acceso desde las subclases**, aunque vivan en otro paquete. Un error frecuente es creer que `protected` es más restrictivo que default — es al revés.
+
+⚠️ **Nota fina sobre `protected` entre paquetes:** cuando la subclase está en **otro paquete**, el acceso `protected` no es total: solo puede tocar el miembro heredado **a través de una referencia de su propio tipo** (o de un subtipo), no a través de una referencia del tipo del padre. Es decir, dentro de `class Hija extends Padre` (en otro paquete), puedes usar `this.campoProtegido` o `(new Hija()).campoProtegido`, pero `(new Padre()).campoProtegido` no compila.
 
 🔑 **Por qué importa:** si `saldo` fuera `public`, cualquiera haría `cuenta.saldo = -9999` y rompería las reglas del negocio. Encapsular **garantiza que los datos solo cambien de formas válidas**. Es la base del código robusto.
 
@@ -1695,6 +1937,38 @@ public class DemoHerencia {
 ```
 🔧 **`super`** se refiere al **padre**: `super(...)` llama a su **constructor** (debe ir en la primera línea del constructor hijo); `super.metodo()` llama a su **versión** de un método. 🔑 En Java una clase **solo hereda de UNA** (herencia simple); para combinar capacidades se usan interfaces (§0.9).
 
+**0.8.2.1 — Composición sobre herencia (la regla que evita jerarquías frágiles)**
+
+La herencia es poderosa, pero se abusa de ella. Hay **dos formas** de reutilizar código de otra clase, y conviene saber cuál elegir:
+
+- **Herencia — relación "es un/una" (*is-a*):** `Perro extends Animal` solo tiene sentido si un perro **es un** animal. La hija queda atada al padre: si cambias el padre, puedes romper a todas las hijas.
+- **Composición — relación "tiene un/una" (*has-a*):** en vez de heredar, tu clase **contiene** un objeto de otra y le delega trabajo. Un `Coche` no *es un* motor; un coche **tiene un** motor.
+
+🏠 **Analogía:** heredar es como nacer en una familia: te llevas todo su ADN, para bien y para mal, y no lo eliges. Componer es como contratar a un especialista: lo usas para lo que sabe hacer y puedes cambiarlo por otro mejor cuando quieras.
+
+```java
+// ❌ Forzar herencia donde no hay "es-un": un coche NO es un motor
+// class Coche extends Motor { ... }   // jerarquía frágil y sin sentido
+
+// ✅ Composición: el coche TIENE un motor y le delega
+class Motor {
+    void arrancar() { System.out.println("Motor en marcha"); }
+}
+class Coche {
+    private Motor motor = new Motor();        // "tiene un" motor
+    void encender() { motor.arrancar(); }     // delega el trabajo al motor
+    public static void main(String[] args) {
+        new Coche().encender();
+    }
+}
+// Salida:
+// Motor en marcha
+```
+
+⚠️ **Por qué importa — fragilidad de jerarquías profundas:** una cadena `A → B → C → D` de `extends` acopla todo: un cambio en `A` se filtra hacia abajo y puede romper `D` sin que lo veas venir (el "problema de la clase base frágil"). Además, en Java solo puedes heredar de **una** clase, así que gastar esa única bala en una relación dudosa te encierra. La composición no tiene ese límite: puedes contener cuantos colaboradores quieras y cambiarlos sin afectar a tus usuarios.
+
+🔑 **Regla práctica ("favor composition over inheritance"):** usa herencia **solo** cuando exista una verdadera relación "es-un" y quieras polimorfismo; en la duda, **compón** (contén un objeto y delega). Es más flexible y menos frágil.
+
 ### 0.8.3 Pilar 3 — Polimorfismo (mismo mensaje, distinto comportamiento)
 
 **Polimorfismo** ("muchas formas") = el **mismo** método se comporta **distinto según el objeto real** que lo ejecuta. Se logra con **override (sobrescritura)**: una subclase **redefine** un método del padre.
@@ -1728,6 +2002,75 @@ public class DemoPolimorfismo {
 ```
 🔑 **El poder:** tratas objetos distintos **de forma uniforme** (todos `Animal`) y cada uno responde a su modo. El código es **extensible**: agregar `Caballo` no obliga a tocar el bucle. 🔧 Java elige la versión del **objeto real** en tiempo de ejecución (*dynamic dispatch*), no la del tipo de la variable.
 
+**0.8.3.1 — Polimorfismo en tiempo de COMPILACIÓN vs tiempo de EJECUCIÓN**
+
+Hay **dos sabores** de polimorfismo, y los entrevistadores los separan:
+
+- **En tiempo de compilación (estático) = *overloading* (sobrecarga):** el compilador decide **qué versión** del método llamar **mientras compila**, mirando los **tipos de los argumentos**. Ya lo viste en §0.6.3.
+- **En tiempo de ejecución (dinámico) = *overriding* (sobrescritura):** la decisión se toma **mientras corre el programa**, según el **objeto real** que hay detrás de la referencia (*dynamic dispatch*). Es el del ejemplo del zoo de arriba.
+
+```java
+class Calc {
+    int op(int a, int b) { return a + b; }          // sobrecarga (compilación)
+    double op(double a, double b) { return a * b; } // el compilador elige por tipos
+}
+class Animal { String sonido() { return "..."; } }
+class Gato extends Animal { @Override String sonido() { return "Miau"; } }
+
+public class DosPolimorfismos {
+    public static void main(String[] args) {
+        Calc c = new Calc();
+        System.out.println(c.op(2, 3));       // 5    -> elegido en COMPILACIÓN (int,int)
+        System.out.println(c.op(2.0, 3.0));   // 6.0  -> elegido en COMPILACIÓN (double,double)
+
+        Animal a = new Gato();                // tipo Animal, objeto real Gato
+        System.out.println(a.sonido());       // Miau -> resuelto en EJECUCIÓN (objeto real)
+    }
+}
+// Salida:
+// 5
+// 6.0
+// Miau
+```
+🔑 Mnemotécnico: **overload = compilador mira el tipo de la variable; override = la JVM mira el objeto real.**
+
+**0.8.3.2 — Upcasting, downcasting, `instanceof` y `ClassCastException`**
+
+Como un `Gato` **es un** `Animal`, puedes guardarlo en una variable `Animal`. Eso es **upcasting** (subir hacia el padre): siempre es seguro y automático. Lo contrario, **downcasting** (bajar al tipo concreto), es manual y **arriesgado**: solo funciona si el objeto **realmente** es de ese tipo.
+
+```java
+class Animal { void comer() { System.out.println("come"); } }
+class Gato extends Animal { void maullar() { System.out.println("Miau"); } }
+class Perro extends Animal { void ladrar() { System.out.println("Guau"); } }
+
+public class Casting {
+    public static void main(String[] args) {
+        Animal a = new Gato();        // UPCASTING (automático, seguro): Gato -> Animal
+        a.comer();                    // ok: 'comer' existe en Animal
+        // a.maullar();               // ❌ no compila: el tipo Animal no conoce 'maullar'
+
+        // DOWNCASTING seguro, protegido con instanceof:
+        if (a instanceof Gato) {
+            Gato g = (Gato) a;        // baja al tipo real
+            g.maullar();              // Miau
+        }
+
+        // DOWNCASTING inseguro (el objeto NO es un Perro):
+        try {
+            Perro p = (Perro) a;      // compila, pero EN EJECUCIÓN explota
+            p.ladrar();
+        } catch (ClassCastException e) {
+            System.out.println("ClassCastException: " + e.getMessage());
+        }
+    }
+}
+// Salida:
+// come
+// Miau
+// ClassCastException: class Gato cannot be cast to class Perro
+```
+⚠️ **`ClassCastException`** ocurre cuando casteas a un tipo que el objeto **no es**. Es de ejecución (unchecked, §0.10.6). **Antídoto:** comprueba siempre con **`instanceof`** antes de bajar de tipo. (Desde Java 16, el *pattern matching* lo abrevia: `if (a instanceof Gato g) g.maullar();` declara y castea en un paso.)
+
 ⚠️ **Override vs Overload** (no confundir):
 
 | | **Override (sobrescritura)** | **Overload (sobrecarga)** |
@@ -1739,6 +2082,26 @@ public class DemoPolimorfismo {
 
 La anotación **`@Override`** marca que sobrescribes (y el compilador te avisa si te equivocas en la firma — atrapa bugs).
 
+🔧 **Reglas de un override válido** (un override mal hecho no sobrescribe: o no compila, o crea silenciosamente una sobrecarga distinta — por eso `@Override` es tu red de seguridad):
+
+- **Mismo nombre y mismos parámetros** que el método del padre (misma firma).
+- **Tipo de retorno:** igual **o covariante** — puedes devolver un **subtipo** del retorno original (p. ej. el padre devuelve `Animal`, la hija puede devolver `Gato`).
+- **Modificador de acceso:** **no puede reducirse**, solo igualarse o ampliarse (un `public` no puede pasar a `protected`/`private`; un `protected` sí puede subir a `public`).
+- **No se puede sobrescribir** un método `private` (no es heredado), `static` (pertenece a la clase, no al objeto) ni `final` (se declaró inmodificable).
+- **Excepciones checked:** las que el override declara **no pueden ampliarse** — solo puede lanzar las mismas, subtipos de ellas, o menos (incluso ninguna). Sí puede añadir libremente excepciones **unchecked**.
+
+```java
+class Padre {
+    protected Animal crear() throws IOException { return new Animal(); }
+}
+class Hija extends Padre {
+    @Override
+    public Gato crear() {           // ✅ acceso AMPLIADO (protected→public),
+        return new Gato();          //    retorno COVARIANTE (Animal→Gato),
+    }                               //    y declara MENOS excepciones (ninguna)
+}
+```
+
 ### 0.8.4 Pilar 4 — Abstracción (mostrar lo esencial, ocultar lo complejo)
 
 **Abstracción** = exponer **qué** hace algo, ocultando **cómo** lo hace. Trabajas con un concepto simple sin cargar los detalles internos.
@@ -1748,6 +2111,35 @@ La anotación **`@Override`** marca que sobrescribes (y el compilador te avisa s
 En Java la abstracción se logra con **clases abstractas** e **interfaces** (§0.9): defines **qué** métodos existen sin decir cómo, y cada implementación los resuelve a su modo.
 
 🔧 **Encapsulación vs abstracción** (se confunden): la **encapsulación** esconde los **datos** (el saldo `private`); la **abstracción** esconde la **complejidad de la implementación** (el "cómo"). Una protege el estado; la otra simplifica el uso.
+
+**Programa completo** — una clase abstracta `MedioPago` define **qué** se puede hacer (`pagar`), ocultando el **cómo**; el código cliente paga sin saber los detalles internos de cada medio:
+```java
+abstract class MedioPago {
+    abstract void pagar(double monto);   // QUÉ se puede hacer (el cómo lo oculta cada hija)
+}
+class Tarjeta extends MedioPago {
+    @Override void pagar(double monto) {
+        // oculto: validar, contactar al banco, autorizar...
+        System.out.println("Pagados $" + monto + " con tarjeta");
+    }
+}
+class Efectivo extends MedioPago {
+    @Override void pagar(double monto) {
+        System.out.println("Pagados $" + monto + " en efectivo");
+    }
+}
+
+public class DemoAbstraccion {
+    public static void main(String[] args) {
+        MedioPago[] medios = { new Tarjeta(), new Efectivo() };
+        for (MedioPago m : medios) m.pagar(100);   // solo el QUÉ; el cómo no importa aquí
+    }
+}
+// Salida:
+// Pagados $100.0 con tarjeta
+// Pagados $100.0 en efectivo
+```
+🔑 El `main` trabaja con el concepto simple "un medio de pago que sabe pagar" sin cargar con la complejidad real de cada uno — eso **es** la abstracción.
 
 ### 0.8.5 Por qué importan para SDET
 
@@ -1854,6 +2246,43 @@ class Persona implements Saludable {
 // new Persona().rutina();  ->  Hago ejercicio / Como verduras
 ```
 - **Métodos `static`:** utilidades asociadas a la interfaz (`Comparator.naturalOrder()`).
+- **Métodos `private` y `private static` (Java 9+):** ayudantes **internos** de la interfaz. Sirven para **compartir código entre varios métodos `default`/`static`** sin exponerlo como parte del contrato (no son visibles para quien implementa). Un `private` puede llamar a otros métodos de instancia; un `private static`, solo a otros estáticos.
+
+```java
+interface Reporte {
+    String titulo();
+    default String encabezado() { return linea() + titulo() + linea(); }  // usa el ayudante
+    default String pie()        { return linea() + "FIN" + linea(); }     // lo reutiliza
+    private String linea() { return "=== "; }   // ayudante PRIVADO: no es parte del contrato
+}
+class Ventas implements Reporte {
+    @Override public String titulo() { return "Ventas Q2"; }
+}
+// new Ventas().encabezado()  ->  "=== Ventas Q2=== "
+```
+🔑 Sin los métodos `private`, ese `linea()` tendrías que duplicarlo en cada `default`, o exponerlo como `default` público aunque sea solo plomería interna.
+
+**0.9.2.2 — El problema del diamante (conflicto de `default` heredados)**
+
+⚠️ Una clase puede implementar **varias** interfaces. ¿Qué pasa si **dos** de ellas traen un método `default` con la **misma firma**? Java no puede adivinar cuál gana, así que **te obliga a resolverlo tú**: el código **no compila** hasta que **sobrescribes** ese método en la clase. Dentro, puedes elegir explícitamente la versión de una interfaz con la sintaxis **`NombreInterfaz.super.metodo()`**.
+
+```java
+interface A { default String saludo() { return "Hola desde A"; } }
+interface B { default String saludo() { return "Hola desde B"; } }
+
+class C implements A, B {
+    @Override
+    public String saludo() {                 // OBLIGATORIO: si no, no compila
+        return A.super.saludo() + " | " + B.super.saludo();  // elige explícitamente
+    }
+    public static void main(String[] args) {
+        System.out.println(new C().saludo());
+    }
+}
+// Salida:
+// Hola desde A | Hola desde B
+```
+🔑 Esta es la razón por la que Java permite herencia **múltiple de comportamiento** vía interfaces sin caer en la ambigüedad clásica del "diamante": cuando hay choque, **obliga** a la clase a desempatar con `Interfaz.super.metodo()`.
 
 ### 0.9.3 Clase abstracta (plantilla parcial con estado)
 
@@ -2084,6 +2513,35 @@ public class Finally {
 // finally SIEMPRE corre (incluso con return)
 // desde try
 ```
+
+⚠️ **Trampa: nunca pongas `return` ni `throw` dentro de `finally`.** Como `finally` corre **al final pase lo que pase**, un `return` (o `throw`) ahí **anula y oculta** el `return` o la excepción que venía del `try` — el valor o el error correctos se pierden en silencio:
+```java
+public class FinallyTrampa {
+    static int valor() {
+        try {
+            return 1;        // este 1 se va a PERDER
+        } finally {
+            return 2;        // ❌ el return del finally GANA y oculta al del try
+        }
+    }
+    static int conThrow() {
+        try {
+            throw new RuntimeException("error real");   // esta excepción se PIERDE
+        } finally {
+            return 99;       // ❌ el return del finally se traga la excepción
+        }
+    }
+    public static void main(String[] args) {
+        System.out.println(valor());      // 2  (no 1)
+        System.out.println(conThrow());   // 99 (la excepción desapareció, ¡peligroso!)
+    }
+}
+// Salida:
+// 2
+// 99
+```
+🔑 Regla firme: **`finally` solo para limpiar (cerrar recursos), nunca para devolver valores ni lanzar.** Un `throw`/`return` ahí esconde bugs casi imposibles de diagnosticar.
+
 🔧 **try-with-resources (la forma moderna de limpiar):** si un recurso implementa `AutoCloseable` (archivos, conexiones, `Scanner`), declararlo en el `try(...)` hace que Java lo **cierre solo** al terminar, sin `finally` manual:
 ```java
 try (Scanner sc = new Scanner(System.in)) {
@@ -2091,7 +2549,62 @@ try (Scanner sc = new Scanner(System.in)) {
     // ... usar sc ...
 }   // Java llama sc.close() automáticamente, pase lo que pase
 ```
-🔑 Esto reemplaza al obsoleto `finalize()` para liberar recursos.
+🔑 try-with-resources da **cierre determinista**: sabes con certeza que `close()` se ejecuta, y **exactamente cuándo** (al salir del `try`).
+
+⚠️ **No lo confundas con `finalize()`** — son mecanismos distintos, ninguno "reemplaza" al otro:
+- **try-with-resources** cierra recursos `AutoCloseable` de forma **determinista** (en un punto exacto y garantizado del código).
+- **`finalize()`** era un método del **ciclo de vida** que el **recolector de basura (garbage collector)** *podía* invocar antes de destruir un objeto — **sin garantía de cuándo ni de si** llegaba a ejecutarse. Quedó **deprecated** (desaconsejado desde Java 9) y **no debe usarse jamás para liberar recursos**: un archivo o conexión podría quedar abierto indefinidamente esperando a un GC que tal vez nunca llame a `finalize()`. Para liberar recursos, la respuesta correcta es siempre `AutoCloseable` + try-with-resources.
+
+**0.10.4.1 — Varios recursos y orden de cierre INVERSO**
+
+Puedes declarar **varios recursos** en el mismo `try`, separados por `;`. Java los cierra **en orden inverso al de apertura** (como una pila: el último que abres es el primero que se cierra) — justo lo que quieres cuando un recurso depende de otro:
+```java
+class Recurso implements AutoCloseable {
+    private final String nombre;
+    Recurso(String nombre) { this.nombre = nombre; System.out.println("Abro " + nombre); }
+    @Override public void close() { System.out.println("Cierro " + nombre); }
+}
+public class VariosRecursos {
+    public static void main(String[] args) {
+        try (Recurso a = new Recurso("A");
+             Recurso b = new Recurso("B")) {     // A se abre primero, B después
+            System.out.println("Trabajando...");
+        }   // se cierran en ORDEN INVERSO: primero B, luego A
+    }
+}
+// Salida:
+// Abro A
+// Abro B
+// Trabajando...
+// Cierro B
+// Cierro A
+```
+
+**0.10.4.2 — Excepciones suprimidas**
+
+⚠️ ¿Y si **el cuerpo** del `try` lanza una excepción **y** además `close()` lanza otra al cerrar? No se pierde ninguna, pero **una manda**: se propaga la **del cuerpo** (la principal) y la de `close()` queda **suprimida** (*suppressed*), adjunta a la primera. La recuperas con **`getSuppressed()`**:
+```java
+class RecursoMalo implements AutoCloseable {
+    @Override public void close() { throw new RuntimeException("falló al cerrar"); }
+}
+public class Suprimidas {
+    public static void main(String[] args) {
+        try {
+            try (RecursoMalo r = new RecursoMalo()) {
+                throw new RuntimeException("falló en el cuerpo");   // ESTA gana
+            }
+        } catch (Exception e) {
+            System.out.println("Principal: " + e.getMessage());
+            for (Throwable s : e.getSuppressed())                  // las suprimidas
+                System.out.println("Suprimida: " + s.getMessage());
+        }
+    }
+}
+// Salida:
+// Principal: falló en el cuerpo
+// Suprimida: falló al cerrar
+```
+🔑 Esto es una **ventaja** de try-with-resources sobre el viejo `finally` manual: con `finally`, si `close()` lanzaba, **tapaba** y hacía desaparecer la excepción original del cuerpo. Aquí no: la original manda y la del cierre queda recuperable.
 
 ### 0.10.5 La jerarquía de excepciones (con diagrama)
 
@@ -2157,6 +2670,50 @@ public class Cuenta {
 ```
 🔑 Las excepciones propias hacen el código **legible** (`catch (SaldoInsuficienteException e)` dice exactamente qué pasó) y permiten manejar cada caso distinto.
 
+**0.10.8.1 — Encadenamiento de causas (`Caused by:`)**
+
+Muchas veces atrapas una excepción de bajo nivel (p. ej. `SQLException`) y quieres relanzar una tuya, más clara para tu dominio, **sin perder** la causa original. Para eso existe el constructor con **`(String mensaje, Throwable causa)`**: envuelves la excepción original como **causa**. Más tarde la recuperas con **`getCause()`**, y el *stack trace* la muestra con la línea **`Caused by:`**.
+
+Añade ese segundo constructor a tu excepción propia:
+```java
+class RegistroException extends RuntimeException {
+    RegistroException(String msg) { super(msg); }
+    RegistroException(String msg, Throwable causa) { super(msg, causa); }  // ENCADENA la causa
+}
+
+public class Encadenar {
+    static void guardar() {
+        try {
+            int x = 10 / 0;                       // causa de bajo nivel: ArithmeticException
+        } catch (ArithmeticException e) {
+            throw new RegistroException("No se pudo guardar el registro", e);  // la envuelve
+        }
+    }
+    public static void main(String[] args) {
+        try {
+            guardar();
+        } catch (RegistroException e) {
+            System.out.println("Mensaje: " + e.getMessage());
+            System.out.println("Causa:   " + e.getCause());   // recupera la original
+        }
+    }
+}
+// Salida:
+// Mensaje: No se pudo guardar el registro
+// Causa:   java.lang.ArithmeticException: / by zero
+```
+
+Si en vez de atraparla la dejas propagar (`guardar()` sin el try externo), el *stack trace* muestra **las dos** excepciones unidas por `Caused by:`:
+```
+Exception in thread "main" RegistroException: No se pudo guardar el registro
+        at Encadenar.guardar(Encadenar.java:11)
+        at Encadenar.main(Encadenar.java:16)
+Caused by: java.lang.ArithmeticException: / by zero
+        at Encadenar.guardar(Encadenar.java:9)
+        ... 1 more
+```
+🔑 **Por qué importa:** sin encadenar, relanzar pierde el rastro de **qué** falló realmente y dónde. Con `Caused by:` lees la cadena completa, del síntoma de alto nivel a la causa raíz — el primer paso para depurar cualquier fallo en capas.
+
 ### 0.10.9 Buenas prácticas
 
 - **No te "comas" las excepciones:** un `catch` vacío (`catch (Exception e) {}`) oculta el error y crea bugs fantasma. Al menos regístralo.
@@ -2187,18 +2744,17 @@ public class Cuenta {
 > import java.util.Scanner;
 > public class LeerSeguro {
 >     public static void main(String[] args) {
->         Scanner sc = new Scanner(System.in);
->         try {
+>         try (Scanner sc = new Scanner(System.in)) {   // try-with-resources: se cierra solo
 >             int n = Integer.parseInt(sc.nextLine());
 >             System.out.println("El doble es " + (n * 2));
 >         } catch (NumberFormatException e) {
 >             System.out.println("Eso no es un número");
 >         }
->         sc.close();
 >     }
 > }
 > // Con "abc" -> Eso no es un número
 > ```
+> 🔑 El `Scanner` va en el `try(...)` para que Java lo cierre solo — coherente con lo que recomienda §0.10.4, en vez de un `close()` manual suelto.
 
 **Ejercicio 2.** ¿Qué imprime y en qué orden?
 > ```java
@@ -2247,12 +2803,14 @@ Java trae el **Collections Framework**: clases listas para usar que implementan 
 🔧 Casi todo cuelga de dos grandes interfaces, **`Collection`** y **`Map`**:
 ```
 Collection (un grupo de elementos)
-├── List  → ordenada, permite duplicados, acceso por índice  → ArrayList, LinkedList
+├── List  → mantiene ORDEN DE INSERCIÓN + acceso por índice, permite duplicados → ArrayList, LinkedList
 ├── Set   → SIN duplicados, sin orden garantizado            → HashSet, TreeSet
 └── Queue → colas (FIFO)                                      → LinkedList, ArrayDeque
 Map (pares clave→valor, claves únicas)                        → HashMap, TreeMap
 ```
 🔑 Programas contra la **interfaz** y eliges la **implementación**: `List<String> x = new ArrayList<>();` (así puedes cambiar la implementación sin tocar el resto, §0.9).
+
+⚠️ **Ojo con "ordenada".** Que una `List` sea *ordenada* significa que **conserva el orden en que insertaste** los elementos y que puedes pedirlos por índice (`get(0)`, `get(1)`…), **no** que estén ordenados de menor a mayor. Para orden ascendente automático necesitas `TreeSet`/`TreeMap` o llamar a `Collections.sort(lista)`. Son cosas distintas: *orden de inserción* ≠ *orden ascendente*.
 
 ### 0.11.2 `List` / `ArrayList` (secuencia ordenada que crece)
 
@@ -2281,6 +2839,22 @@ public class DemoList {
 // 1
 // comprar lavar
 ```
+
+⚠️ **Trampa clásica con `List<Integer>`: `remove(int)` vs `remove(Object)`.** `List` tiene **dos** métodos `remove`: uno que recibe un **índice** (`remove(int index)`) y otro que recibe el **objeto a borrar** (`remove(Object o)`). Con una `List<Integer>`, el literal `2` es un `int`, así que Java elige el método por **índice** — borra la posición 2, no el valor 2. Para borrar **por valor** tienes que forzar el tipo `Integer`:
+```java
+List<Integer> nums = new ArrayList<>(List.of(10, 20, 30, 40));
+nums.remove(2);                     // borra el ÍNDICE 2 (el 30) -> [10, 20, 40]
+System.out.println(nums);           // [10, 20, 40]
+
+nums.remove(Integer.valueOf(20));   // borra el VALOR 20 -> [10, 40]
+System.out.println(nums);           // [10, 40]
+```
+```
+// Salida:
+// [10, 20, 40]
+// [10, 40]
+```
+🔑 Regla de bolsillo: con una lista de enteros, `remove(Integer.valueOf(x))` cuando quieres borrar el **valor** `x`; `remove(índice)` solo cuando de verdad quieres borrar una **posición**. (Con `List<String>` no hay confusión: un `String` nunca es un `int`.)
 
 ### 0.11.3 `Set` / `HashSet` (sin duplicados)
 
@@ -2328,10 +2902,29 @@ public class DemoMap {
 // null
 // 0
 // true
+// (las dos líneas siguientes pueden salir en CUALQUIER orden — ver aviso ⚠️)
 // manzanas = 60
 // peras = 30
 ```
 🔑 **`getOrDefault`** es tu mejor amigo para contar frecuencias: `mapa.put(k, mapa.getOrDefault(k, 0) + 1)`.
+
+⚠️ **El orden de iteración de `HashMap` NO está garantizado.** El recorrido del `entrySet()` puede imprimir los pares en cualquier orden (depende del `hashCode` de las claves y del tamaño interno de la tabla), y puede cambiar entre versiones de Java o al agregar más entradas. **Nunca** escribas código (ni una prueba) que dependa del orden de un `HashMap`. Si necesitas un orden **fijo y predecible**, elige la implementación adecuada:
+
+| Quieres… | Usa | Orden que verás |
+|---|---|---|
+| Orden de **inserción** (como lo metiste) | `LinkedHashMap` | `manzanas`, `peras` |
+| Orden **ascendente de claves** | `TreeMap` | `manzanas`, `peras` (alfabético) |
+
+```java
+Map<String, Integer> stock = new LinkedHashMap<>();   // mantiene orden de inserción
+stock.put("manzanas", 50);
+stock.put("peras", 30);
+stock.put("manzanas", 60);     // actualizar una clave existente NO cambia su posición
+stock.forEach((k, v) -> System.out.println(k + " = " + v));
+// Salida (ahora SÍ garantizada):
+// manzanas = 60
+// peras = 30
+```
 
 ### 0.11.5 Recorrer colecciones (las formas)
 
@@ -2355,6 +2948,29 @@ for (Map.Entry<String,Integer> e : mapa.entrySet()) {// Map: pares (lo más usad
 | Claves/elementos **ordenados** | `TreeMap`/`TreeSet` | mantienen orden (O(log n)) |
 | Pila o cola | `ArrayDeque` | extremos O(1) |
 
+🔧 **`ArrayDeque` como pila y como cola.** Un `Deque` ("double-ended queue", se lee *"dec"*) deja agregar y sacar por **ambos extremos** en O(1). Es la implementación recomendada hoy tanto para **pila** (LIFO) como para **cola** (FIFO) — más rápida que la vieja clase `Stack` y que `LinkedList`. Como **pila** usas `push`/`pop`/`peek`:
+```java
+import java.util.*;
+public class DemoPila {
+    public static void main(String[] args) {
+        Deque<Integer> pila = new ArrayDeque<>();   // programa contra la interfaz Deque
+        pila.push(1);          // mete por arriba  -> [1]
+        pila.push(2);          //                  -> [2, 1]  (2 queda encima)
+        pila.push(3);          //                  -> [3, 2, 1]
+        System.out.println(pila.peek());   // 3   (mira la cima SIN sacarla)
+        System.out.println(pila.pop());    // 3   (saca la cima)
+        System.out.println(pila.pop());    // 2
+        System.out.println(pila.size());   // 1   (queda el 1)
+    }
+}
+// Salida:
+// 3
+// 3
+// 2
+// 1
+```
+🔑 Como **cola** (FIFO) usas `offer` (encolar al final) y `poll` (sacar del frente): `cola.offer(1); cola.offer(2); cola.poll();` devuelve `1`. ⚠️ No metas `null` en un `ArrayDeque`: lo prohíbe (`poll`/`peek` usan `null` para señalar "vacío", así que un `null` real rompería esa señal).
+
 ### 0.11.7 Por qué importan (y nota SDET)
 
 🔑 Estas colecciones son el **80% de lo que usarás** resolviendo algoritmos en Java: `HashMap` para frecuencias/búsquedas O(1), `HashSet` para duplicados, `ArrayList` para resultados, `ArrayDeque` para pila/cola. Dominar su sintaxis aquí hace que la Parte 3 (patrones) fluya. 🧪 En pruebas: una `List<WebElement>` de resultados, un `Map` de datos de prueba, un `Set` para verificar que no haya filas duplicadas en una tabla.
@@ -2366,8 +2982,9 @@ for (Map.Entry<String,Integer> e : mapa.entrySet()) {// Map: pares (lo más usad
 > String[] palabras = {"a", "b", "a", "c", "a"};
 > Map<String,Integer> conteo = new HashMap<>();
 > for (String p : palabras) conteo.put(p, conteo.getOrDefault(p, 0) + 1);
-> System.out.println(conteo);   // {a=3, b=1, c=1}
+> System.out.println(conteo);   // los conteos son a=3, b=1, c=1 — el ORDEN al imprimir NO está garantizado (es un HashMap)
 > ```
+> ⚠️ Aunque aquí casualmente se vea `{a=3, b=1, c=1}`, **no asumas ese orden**: `HashMap` no garantiza orden de iteración (§0.11.4). Si quieres una salida estable —p. ej. para una prueba que compara el `toString`— usa `LinkedHashMap` (orden de inserción) o `TreeMap` (claves ordenadas).
 
 **Ejercicio 2.** Dada una lista con repetidos, obtén los elementos únicos.
 > ```java
@@ -2504,9 +3121,56 @@ static double sumar(List<? extends Number> nums) {   // acepta List<Integer>, Li
 }
 ```
 
+#### El principio PECS (*Producer-Extends, Consumer-Super*)
+
+🔑 La regla que Joshua Bloch popularizó en *Effective Java* para elegir el comodín correcto se resume en el acrónimo **PECS — "Producer-Extends, Consumer-Super"**:
+- Si la colección **produce** (te da) valores que vas a **leer** → usa `? extends T`.
+- Si la colección **consume** (recibe) valores que vas a **escribir** → usa `? super T`.
+
+🏠 **Analogía:** una **tubería de agua**. Si la tubería te **surte** agua (producer), solo te importa que lo que salga sea *al menos* agua potable → `extends`. Si tú **viertes** agua en ella (consumer), te importa que el recipiente acepte *al menos* tu agua → `super`. No usas la misma boca para surtir y para verter.
+
+**Por qué `List<? extends Number>` NO deja hacer `add` (solo leer).** Aquí está la asimetría que confunde a todos:
+```java
+static void demo(List<? extends Number> nums) {
+    Number n = nums.get(0);   // ✅ LEER sí: salga lo que salga, ES un Number
+    // nums.add(42);          // ❌ NO COMPILA: error "incompatible types"
+    // nums.add(3.14);        // ❌ NO COMPILA tampoco
+}
+```
+El compilador razona así: `List<? extends Number>` significa "una lista de **algún** subtipo concreto de `Number`, pero **no sé cuál**". Podría ser una `List<Integer>`, una `List<Double>` o una `List<Long>` — el método no lo sabe.
+- **Leer es seguro:** sea cual sea ese subtipo, todo lo que saques es, con certeza, un `Number`. Por eso `get(...)` devuelve `Number` sin problema.
+- **Escribir es inseguro:** si intentas `add(42)` (un `Integer`) y la lista real resulta ser una `List<Double>`, acabarías metiendo un `Integer` donde solo caben `Double` → corrupción de tipos. Como el compilador **no puede garantizar** cuál es el tipo real, prohíbe **cualquier** `add` (excepto `null`, que vale para todos).
+
+Y al revés, con `? super`:
+```java
+static void llenar(List<? super Integer> destino) {
+    destino.add(1);            // ✅ ESCRIBIR sí: la lista es de Integer o de un supertipo
+    destino.add(2);            // ✅ cabe seguro
+    // Integer x = destino.get(0);  // ❌ leer como Integer NO compila: podría ser List<Object>
+    Object o = destino.get(0); // ✅ lo único garantizado al leer es que es Object
+}
+// new ArrayList<Number>()  o  new ArrayList<Object>()  sirven como destino
+```
+🔑 **En una frase:** `extends` = lista de **lectura** (producer), `super` = lista de **escritura** (consumer). Si necesitas hacer **ambas** cosas, usa el tipo exacto `List<Number>` sin comodín.
+
 ### 0.12.7 Type erasure (dato de entrevista)
 
 🔧 Los genéricos existen en **tiempo de compilación**; al compilar, la información de tipo se "borra" (*type erasure*) y el bytecode trabaja con `Object` más casts automáticos. Consecuencia práctica: no puedes hacer `new T[]` ni `if (x instanceof List<String>)`. No lo necesitas a diario, pero saberlo distingue.
+
+⚠️ **Matiz importante sobre `instanceof`.** Lo que NO compila es comprobar un tipo genérico **concreto**, porque en ejecución ya no existe:
+```java
+if (x instanceof List<String>) { ... }   // ❌ NO COMPILA: el <String> se borró, no hay nada que comprobar
+```
+En cambio **SÍ** compilan estas dos formas, porque preguntan solo por el tipo *crudo* (que sí sobrevive a la erasure):
+```java
+if (x instanceof List) { ... }            // ✅ tipo crudo (raw)
+if (x instanceof List<?>) { ... }         // ✅ comodín: "una List de lo que sea"
+```
+🔧 **Otra consecuencia: no puedes sobrecargar dos métodos que difieran SOLO en el genérico.** Tras la erasure ambos quedan con la misma firma y **chocan** (error de compilación "have the same erasure"):
+```java
+void procesar(List<String> l) { ... }
+void procesar(List<Integer> l) { ... }    // ❌ NO COMPILA: ambos se borran a procesar(List)
+```
 
 ### 0.12.8 Ejercicios resueltos
 
@@ -2639,6 +3303,34 @@ public class Persona {
 ```
 🔑 **La regla de oro:** si `a.equals(b)`, entonces `a.hashCode() == b.hashCode()`. **Por qué:** `HashSet`/`HashMap` usan `hashCode` para la cubeta y `equals` para confirmar (cap. 5). Inconsistentes → "pierden" objetos o crean duplicados lógicos. Los IDE autogeneran ambos; `String` e `Integer` ya los traen bien (por eso son claves perfectas).
 
+#### El contrato completo de `equals()` (5 propiedades)
+
+🔧 `equals` no es "compara como quieras": el lenguaje exige un **contrato** de 5 reglas. Si lo rompes, las colecciones se comportan de forma impredecible (y es pregunta fija de entrevista). Para cualquier referencia **no nula** `x`, `y`, `z`:
+
+| Propiedad | Regla | En palabras |
+|---|---|---|
+| **Reflexiva** | `x.equals(x)` es `true` | todo objeto es igual a sí mismo |
+| **Simétrica** | `x.equals(y)` ⟺ `y.equals(x)` | si A es igual a B, B debe ser igual a A |
+| **Transitiva** | si `x.equals(y)` y `y.equals(z)` → `x.equals(z)` | la igualdad "se encadena" |
+| **Consistente** | llamadas repetidas dan el mismo resultado | mientras no cambien los datos comparados, no cambia el resultado |
+| **vs `null`** | `x.equals(null)` es `false` | nunca igual a `null`, y **nunca** lanza `NullPointerException` |
+
+🔑 La última se cumple gratis con `instanceof`: `o instanceof Persona` ya devuelve `false` si `o` es `null` (no hay que escribir un `if (o == null)` aparte).
+
+⚠️ **El problema de la SIMETRÍA con herencia: `instanceof` vs `getClass()`.** Imagina `class Empleado extends Persona` que añade un campo y amplía `equals`. Si las clases usan `instanceof`, la simetría se **rompe**:
+```java
+Persona  p = new Persona("Ana", 1);
+Empleado e = new Empleado("Ana", 1, "QA");
+p.equals(e);   // true  -> el equals de Persona solo mira el id (e ES un Persona)
+e.equals(p);   // false -> el equals de Empleado además exige mismo puesto, y p no lo tiene
+// p.equals(e) != e.equals(p)  ⇒  ¡simetría rota!  Un HashSet se vuelve impredecible.
+```
+Hay dos escuelas para evitarlo:
+- **`getClass()` (simetría estricta):** `if (o == null || getClass() != o.getClass()) return false;`. Así un `Persona` y un `Empleado` **nunca** son iguales (clases distintas) → simetría garantizada. **Contra:** rompe la igualdad con subtipos legítimos (p. ej. un proxy que el framework genera por herencia).
+- **`instanceof` (admite subtipos):** más flexible, pero **solo es seguro** si la clase es `final` o si el `equals` no se vuelve a extender en las subclases. Por eso muchas clases de valor se declaran `final` (como `Punto` en §0.13.4): cierra la herencia y `instanceof` queda a salvo.
+
+🔑 Regla práctica: para una clase de valor, **declárala `final` y usa `instanceof`**; si debe ser heredable y comparable, usa `getClass()` y asume que subtipo y supertipo no serán iguales.
+
 ### 0.13.4 Inmutabilidad y `final`
 
 Un objeto **inmutable** no cambia tras crearse (como `String`). Se logra con atributos `private final` y **sin setters**:
@@ -2652,6 +3344,65 @@ public final class Punto {        // final en la CLASE: nadie puede heredar
 }
 ```
 🔑 **`final`** según dónde: en **variable** → no reasignable; en **método** → no sobrescribible; en **clase** → no heredable. Ventajas de la inmutabilidad: segura de compartir (nadie la altera por sorpresa), segura entre hilos, y confiable como clave de `Map`.
+
+#### La copia defensiva: `final` ≠ inmutable cuando el campo es un objeto mutable
+
+⚠️ **`final` solo congela la REFERENCIA, no el objeto al que apunta.** Si un campo es un objeto **mutable** —una `List`, un `Date`, un array— marcarlo `private final` **NO basta** para que tu clase sea inmutable: nadie podrá *reasignar* el campo, pero cualquiera que tenga la misma referencia podrá *mutar su contenido* (agregar, borrar, cambiar elementos) por la espalda.
+
+🏠 **Analogía:** `final` es como **soldar un buzón a la pared** — ya nadie cambia el buzón de sitio (la referencia). Pero si dejas la **llave del buzón** colgada afuera, cualquiera abre y revuelve las cartas de adentro (el contenido). Inmutabilidad de verdad = buzón soldado **y** sin copias de la llave circulando.
+
+Veamos el **fallo** y su **corrección**:
+```java
+import java.util.*;
+public final class EquipoMal {
+    private final List<String> miembros;
+    public EquipoMal(List<String> miembros) {
+        this.miembros = miembros;            // ❌ guarda la MISMA lista que recibió
+    }
+    public List<String> getMiembros() {
+        return miembros;                     // ❌ entrega la lista interna tal cual
+    }
+    public static void main(String[] args) {
+        List<String> origen = new ArrayList<>(List.of("Ana", "Beto"));
+        EquipoMal eq = new EquipoMal(origen);
+
+        origen.add("Intruso");               // mutar la lista ORIGINAL...
+        System.out.println(eq.getMiembros());        // [Ana, Beto, Intruso]  ← ¡se coló!
+        eq.getMiembros().add("OtroIntruso"); // ...o mutar la que devuelve el getter
+        System.out.println(eq.getMiembros());        // [Ana, Beto, Intruso, OtroIntruso]
+    }
+}
+// Salida:
+// [Ana, Beto, Intruso]
+// [Ana, Beto, Intruso, OtroIntruso]
+```
+El objeto "inmutable" se modificó dos veces sin tocar un solo setter. La causa: compartimos la **misma** referencia con el exterior, en el constructor y en el getter.
+
+🔧 **La corrección: copia defensiva en AMBOS extremos** — copia al entrar (constructor) y copia al salir (getter):
+```java
+import java.util.*;
+public final class EquipoBien {
+    private final List<String> miembros;
+    public EquipoBien(List<String> miembros) {
+        this.miembros = new ArrayList<>(miembros);   // ✅ copia al ENTRAR: no guardo la del cliente
+    }
+    public List<String> getMiembros() {
+        return new ArrayList<>(miembros);            // ✅ copia al SALIR: doy una copia, no la mía
+        // alternativa: return Collections.unmodifiableList(miembros);  // vista de solo lectura
+    }
+    public static void main(String[] args) {
+        List<String> origen = new ArrayList<>(List.of("Ana", "Beto"));
+        EquipoBien eq = new EquipoBien(origen);
+
+        origen.add("Intruso");                  // mutar el original ya NO afecta
+        eq.getMiembros().add("OtroIntruso");    // mutar lo que devuelve el getter tampoco
+        System.out.println(eq.getMiembros());   // [Ana, Beto]  ← intacto
+    }
+}
+// Salida:
+// [Ana, Beto]
+```
+🔑 **Regla:** para campos que son objetos mutables (`List`, `Set`, `Map`, `Date`, arrays…), `private final` no es suficiente — **copia en el constructor y en el getter** (o devuelve una vista inmutable con `Collections.unmodifiable*` / `List.copyOf`). Tipos que ya son inmutables (`String`, `Integer`, otros valores `final`) no necesitan copia: nadie puede mutarlos.
 
 ### 0.13.5 `Comparable` y `Comparator` (ordenar tus objetos)
 
@@ -2676,6 +3427,14 @@ System.out.println(l);   // [Café($45.0), Té($30.0), Agua($15.0)]
 ```
 🔑 `compareTo`/`compare` devuelven: **negativo** si "este" va antes, **0** si igual, **positivo** si va después. Es la base de cómo se ordenan colecciones de objetos.
 
+⚠️ **Trampa del comparador por resta: `(a, b) -> a - b` puede DESBORDAR.** Es tentador comparar enteros restando, pero si los valores son grandes la resta se sale del rango de `int` y da un signo **equivocado** → el orden queda mal:
+```java
+int a = 2_000_000_000, b = -2_000_000_000;
+System.out.println(a - b);                  // -294967296  ← ¡negativo! debería ser "a > b" (positivo)
+System.out.println(Integer.compare(a, b));  // 1           ← correcto
+```
+🔑 **Nunca compares restando.** Usa `Integer.compare(a, b)` (o `Long.compare`, `Double.compare`): hacen la comparación sin riesgo de desbordamiento. Es decir, `(a, b) -> Integer.compare(a, b)` en vez de `(a, b) -> a - b`. (Los ejemplos cortos de §0.15.2/§0.15.3 usan la resta solo por brevedad con valores chicos; en código real usa `Integer.compare`.)
+
 ### 0.13.6 Paquetes e imports
 
 Un **paquete** agrupa clases relacionadas y evita choques de nombres. **`import`** trae una clase de otro paquete:
@@ -2685,6 +3444,8 @@ import java.util.ArrayList;        // traer una clase
 import java.util.*;                // traer todo un paquete (comodín)
 ```
 🧪 En tu framework: `import org.openqa.selenium.WebDriver;`, `import org.junit.jupiter.api.Test;`.
+
+⚠️ **El import comodín (`import java.util.*;`) se desaconseja en código profesional.** Aunque es cómodo y lo verás en ejemplos cortos (incluido este manual, por brevedad), en un proyecto real prefiere imports explícitos uno por clase. Razones: (1) **oculta de qué dependes** —al leer la cabecera no sabes qué clases usa el archivo—; y (2) puede provocar **choques de nombres** si dos paquetes definen una clase con el mismo nombre (p. ej. `java.util.Date` y `java.sql.Date`), obligándote a escribir el nombre completo. Los IDE gestionan los imports explícitos automáticamente, así que no cuesta nada.
 
 ### 0.13.7 Ejercicios resueltos
 
@@ -2863,7 +3624,20 @@ public class DemoLambda {
 | `Function<T,R>` | `apply` | T → R | `s -> s.length()` |
 | `Consumer<T>` | `accept` | T → (nada) | `x -> System.out.println(x)` |
 | `Supplier<T>` | `get` | (nada) → T | `() -> new Random().nextInt()` |
-| `Comparator<T>` | `compare` | (T,T) → int | `(a,b) -> a - b` |
+| `Comparator<T>` | `compare` | (T,T) → int | `(a,b) -> Integer.compare(a,b)` |
+| `BinaryOperator<T>` | `apply` | (T,T) → T | `(a,b) -> a + b` |
+
+🔧 **`BinaryOperator<T>`** combina **dos valores del mismo tipo en uno** de ese mismo tipo; es justo lo que pide `reduce` (§0.15.6) para ir acumulando: `nums.stream().reduce((a, b) -> a + b)`. (Es un caso especial de `BiFunction<T,T,T>`.) ⚠️ Nota que la lambda de `Comparator` se muestra ahora con `Integer.compare(a,b)` y no con `a - b`: la resta puede **desbordar** con enteros grandes (ver la trampa en §0.13.5).
+
+🔑 **La anotación `@FunctionalInterface`.** Cuando defines tu propia interfaz funcional, márcala con `@FunctionalInterface`. No es obligatoria, pero hace que el **compilador verifique** que tiene exactamente **un** método abstracto; si alguien añade un segundo por error, el código deja de compilar de inmediato (en vez de fallar misteriosamente al usar la lambda):
+```java
+@FunctionalInterface
+interface Operacion {
+    int aplicar(int a, int b);     // un solo método abstracto -> sirve para lambdas
+    // int otra(int x);            // ❌ si lo descomentas, NO compila: ya no es funcional
+}
+// Operacion suma = (a, b) -> a + b;   suma.aplicar(2, 3) -> 5
+```
 
 ```java
 import java.util.function.*;
@@ -2969,11 +3743,210 @@ public class StreamEjemplos {
 // true
 ```
 
-### 0.15.7 Streams vs bucles (cuándo cada uno)
+### 0.15.7 `Optional`: la respuesta de Java al `null`
+
+🔧 **El porqué.** ¿Qué devuelve un stream cuando pides "el máximo" de una lista... **vacía**? No hay máximo. Antes, esos métodos devolvían `null`, y quien lo olvidaba comprobar se llevaba un `NullPointerException` (el error #1 de Java). Java 8 introdujo **`Optional<T>`**: una **caja que contiene un valor o está vacía**, y que te **obliga** a considerar el caso "no hay nada" antes de usar el valor.
+
+🏠 **Analogía:** un `Optional` es un **paquete que puede venir vacío**. En vez de meter la mano a ciegas en una bolsa (y a veces no agarrar nada → NPE), recibes un paquete que **siempre existe** y cuya etiqueta dice si trae algo. Estás forzado a leer la etiqueta antes de abrirlo.
+
+Varias operaciones terminales devuelven `Optional` justamente porque **pueden no encontrar nada**: `reduce(BinaryOperator)` (sin valor inicial), `findFirst()`, `findAny()`, `max(...)`, `min(...)`.
+
+```java
+import java.util.*;
+import java.util.stream.*;
+public class DemoOptional {
+    public static void main(String[] args) {
+        List<Integer> nums = List.of(3, 7, 2, 9, 4);
+
+        Optional<Integer> maximo = nums.stream().max(Integer::compare);  // ¿hay máximo? caja Optional
+        System.out.println(maximo.isPresent());      // true   (¿trae valor?)
+        System.out.println(maximo.get());            // 9      (¡cuidado! get() en caja vacía LANZA)
+
+        // El idioma SEGURO: orElse da un valor por defecto si está vacío
+        Optional<Integer> deVacia = List.<Integer>of().stream().max(Integer::compare);
+        System.out.println(deVacia.isPresent());     // false
+        System.out.println(deVacia.orElse(-1));      // -1     (la lista estaba vacía)
+
+        // map sobre el Optional: transforma SOLO si hay valor; si no, sigue vacío
+        Optional<String> texto = nums.stream().filter(n -> n > 100).findFirst()  // no hay > 100
+                                       .map(n -> "encontrado: " + n);
+        System.out.println(texto.orElse("ninguno"));  // ninguno
+    }
+}
+// Salida:
+// true
+// 9
+// false
+// -1
+// ninguno
+```
+🔑 Métodos clave de `Optional`: **`isPresent()`** (¿trae valor?), **`get()`** (saca el valor — **lanza `NoSuchElementException` si está vacío**, por eso casi nunca se usa solo), **`orElse(valorPorDefecto)`** (saca el valor o, si está vacío, el por defecto), **`map(fn)`** (transforma el contenido solo si existe), y **`ifPresent(consumer)`** (ejecuta una acción solo si hay valor). ⚠️ **Regla de oro:** prefiere `orElse(...)` / `ifPresent(...)` / `map(...)` sobre `get()`; usar `get()` sin comprobar antes con `isPresent()` reintroduce el mismo riesgo de NPE que `Optional` venía a eliminar.
+
+### 0.15.8 Collectors esenciales (más allá de `toList()`)
+
+🔧 La operación terminal `collect(...)` toma un **`Collector`**: una "receta" de cómo empaquetar el resultado. Ya usaste `Collectors.toList()`; estos son los demás que verás todo el tiempo (paquete `java.util.stream.Collectors`):
+
+| Collector | Produce | Para qué |
+|---|---|---|
+| `toList()` | `List` | recoger en lista (lo más común) |
+| `toSet()` | `Set` | recoger sin duplicados |
+| `toMap(claveFn, valorFn)` | `Map` | construir un mapa clave→valor |
+| `joining(sep)` | `String` | unir Strings con un separador |
+| `groupingBy(clasificador)` | `Map<K, List<T>>` | **agrupar** elementos por una clave |
+| `counting()` | `Long` | contar (se usa dentro de `groupingBy`) |
+
+```java
+import java.util.*;
+import java.util.stream.*;
+public class DemoCollectors {
+    public static void main(String[] args) {
+        List<String> palabras = List.of("manzana", "pera", "kiwi", "uva", "mango");
+
+        // toSet(): primeras letras únicas
+        Set<Character> iniciales = palabras.stream()
+            .map(p -> p.charAt(0)).collect(Collectors.toSet());
+        System.out.println(iniciales.contains('k'));    // true
+
+        // joining(): unir en un solo String
+        String csv = palabras.stream().collect(Collectors.joining(", "));
+        System.out.println(csv);    // manzana, pera, kiwi, uva, mango
+
+        // toMap(): palabra -> su longitud  (¡las claves deben ser únicas!)
+        Map<String, Integer> largos = palabras.stream()
+            .collect(Collectors.toMap(p -> p, String::length));
+        System.out.println(largos.get("kiwi"));    // 4
+
+        // groupingBy(): agrupar por longitud -> Map<Integer, List<String>>
+        Map<Integer, List<String>> porLargo = palabras.stream()
+            .collect(Collectors.groupingBy(String::length));
+        System.out.println(porLargo);
+        // {3=[uva], 4=[pera, kiwi], 5=[mango], 7=[manzana]}  (claves ordenadas por ser TreeMap? NO: ver aviso)
+
+        // groupingBy + counting(): cuántas palabras hay de cada longitud
+        Map<Integer, Long> conteoPorLargo = palabras.stream()
+            .collect(Collectors.groupingBy(String::length, Collectors.counting()));
+        System.out.println(conteoPorLargo.get(4));    // 2  (pera, kiwi)
+    }
+}
+// Salida:
+// true
+// manzana, pera, kiwi, uva, mango
+// 4
+// {3=[uva], 4=[pera, kiwi], 5=[mango], 7=[manzana]}
+// 2
+```
+⚠️ Dos avisos importantes:
+- **`groupingBy` devuelve un `HashMap` por defecto** → el orden de las claves al imprimir **NO está garantizado** (§0.11.4). Aunque arriba salga ordenado, no lo asumas; si quieres claves ordenadas pasa un proveedor de mapa: `groupingBy(String::length, TreeMap::new, Collectors.toList())`.
+- **`toMap` falla si hay claves repetidas** → lanza `IllegalStateException: Duplicate key`. Si pueden repetirse, usa la sobrecarga con función de fusión: `toMap(k, v, (a, b) -> a)` (qué hacer cuando dos elementos chocan en la misma clave).
+
+🔑 **`groupingBy` es pan de cada día**: "agrúpame los empleados por departamento", "los pedidos por estado", "los elementos de la tabla por categoría". Y combinado con `counting()` (o `summingInt`, `averagingDouble`…) hace conteos y agregaciones por grupo en una sola línea.
+
+### 0.15.9 La pereza (*laziness*) demostrada
+
+🔧 Dijimos que las operaciones **intermedias son perezosas**: no ejecutan nada hasta que llega la **terminal**. Hasta ahora era una afirmación; vamos a **verlo** con `peek()`, una operación intermedia que solo "espía" cada elemento que pasa (ideal para depurar la tubería).
+
+**(a) Sin operación terminal, NO se ejecuta nada:**
+```java
+import java.util.stream.*;
+public class DemoPereza1 {
+    public static void main(String[] args) {
+        Stream.of("a", "b", "c")
+            .peek(x -> System.out.println("viendo: " + x))   // intermedia
+            .map(String::toUpperCase);                        // intermedia
+        // ¡No hay terminal! -> la tubería queda "armada" pero NUNCA corre
+        System.out.println("fin");
+    }
+}
+// Salida:
+// fin
+```
+🔑 No se imprimió ni un solo "viendo: ...". Sin `collect`/`forEach`/`count`/etc., el stream es una receta que **nadie cocinó**.
+
+**(b) El flujo es VERTICAL: cada elemento atraviesa toda la tubería antes que el siguiente.** Esto sorprende: uno imagina "primero filtra TODOS, luego mapea TODOS". No: cada elemento baja por la tubería completa, uno a uno.
+```java
+import java.util.stream.*;
+public class DemoPereza2 {
+    public static void main(String[] args) {
+        Stream.of(1, 2, 3)
+            .peek(n -> System.out.println("filter ve: " + n))
+            .map(n -> { System.out.println("map procesa: " + n); return n * 10; })
+            .forEach(n -> System.out.println("terminal: " + n));   // terminal: dispara todo
+    }
+}
+// Salida:
+// filter ve: 1
+// map procesa: 1
+// terminal: 10
+// filter ve: 2
+// map procesa: 2
+// terminal: 20
+// filter ve: 3
+// map procesa: 3
+// terminal: 30
+```
+✍️ **Traza del recorrido vertical** (lee la salida de arriba abajo):
+
+| Elemento | peek (filter ve) | map procesa | terminal |
+|---|---|---|---|
+| `1` | "filter ve: 1" | "map procesa: 1" → 10 | "terminal: 10" |
+| `2` | "filter ve: 2" | "map procesa: 2" → 20 | "terminal: 20" |
+| `3` | "filter ve: 3" | "map procesa: 3" → 30 | "terminal: 30" |
+
+🔑 Por qué importa: gracias a esto, operaciones como `limit(n)` o `findFirst()` pueden **cortar temprano** (short-circuit) — en cuanto tienen lo que necesitan, dejan de procesar el resto. Si la tubería procesara "todo a la vez por etapas", eso sería imposible.
+
+### 0.15.10 Tres trampas finales (consumo único, paralelismo, boxing)
+
+**(a) Un stream se consume UNA sola vez.** Tras una operación terminal el stream queda "agotado"; reusarlo lanza `IllegalStateException`. Error común:
+```java
+import java.util.stream.*;
+public class DemoConsumo {
+    public static void main(String[] args) {
+        Stream<String> s = Stream.of("a", "b", "c");
+        System.out.println(s.count());     // 3   (1ª terminal: OK, consume el stream)
+        System.out.println(s.count());     // 💥 IllegalStateException: stream has already been operated upon or closed
+    }
+}
+```
+⚠️ **Síntoma:** `java.lang.IllegalStateException: stream has already been operated upon or closed`. **Solución:** crea un stream **nuevo** cada vez (`lista.stream()` de la colección), no guardes el `Stream` en una variable para reusarlo. La colección se puede recorrer mil veces; el stream, una.
+
+**(b) `parallelStream()`: paralelismo casi gratis... con cuidado.** Cambiar `.stream()` por `.parallelStream()` reparte el trabajo entre varios núcleos:
+```java
+long total = numeros.parallelStream().filter(n -> n % 2 == 0).count();
+```
+⚠️ **Cuándo NO usarlo** (que es casi siempre): con colecciones **pequeñas** (el costo de coordinar hilos supera la ganancia); cuando la operación tiene **efectos secundarios** o toca estado compartido (resultados corruptos o no deterministas); o cuando el **orden importa**. Úsalo solo con conjuntos **grandes**, operaciones **costosas y sin estado**, y midiendo que de verdad mejora. Regla práctica: empieza secuencial; paraleliza solo si un *benchmark* lo justifica.
+
+**(c) `IntStream` y `mapToInt(...).sum()`: evita el boxing.** Un `Stream<Integer>` empaqueta cada número en un objeto `Integer` (autoboxing, §0.3.8): lento y con basura de memoria si son muchos. Para primitivos hay streams especializados — `IntStream`, `LongStream`, `DoubleStream` — que trabajan con el primitivo directo y traen agregados listos (`sum`, `average`, `max`):
+```java
+import java.util.*;
+import java.util.stream.*;
+public class DemoIntStream {
+    public static void main(String[] args) {
+        List<String> palabras = List.of("manzana", "pera", "kiwi");
+
+        // ❌ con boxing: cada length() se empaqueta a Integer, y reduce desempaqueta
+        int total1 = palabras.stream().map(String::length).reduce(0, Integer::sum);
+
+        // ✅ sin boxing: mapToInt produce un IntStream de int puros; .sum() es directo
+        int total2 = palabras.stream().mapToInt(String::length).sum();
+
+        System.out.println(total1 + " " + total2);   // 15 15  (longitudes: manzana=7, pera=4, kiwi=4 -> 7+4+4=15)
+        // rango de enteros sin crear lista:
+        System.out.println(IntStream.rangeClosed(1, 5).sum());          // 15  (1+2+3+4+5)
+        System.out.println(IntStream.rangeClosed(1, 5).average().getAsDouble());  // 3.0
+    }
+}
+// Salida:
+// 15 15
+// 15
+// 3.0
+```
+🔑 Para sumar/promediar/contar números, **`mapToInt(...).sum()`** (o `.average()`, `.max()`) es más rápido y más claro que `map(...).reduce(...)` con `Integer`. Y `IntStream.range(a, b)` / `rangeClosed(a, b)` genera rangos de enteros sin construir una `List` intermedia.
+
+### 0.15.11 Streams vs bucles (cuándo cada uno)
 
 🔑 Los streams brillan para **transformar/filtrar/agregar** colecciones de forma legible y declarativa. Un **bucle** sigue siendo mejor cuando necesitas índices, modificar en su lugar, o lógica con muchos pasos y efectos secundarios. ⚠️ No abuses: un stream con 6 operaciones encadenadas puede ser **menos** legible que un `for` claro. Usa el que comunique mejor la intención.
 
-### 0.15.8 Por qué importan para SDET
+### 0.15.12 Por qué importan para SDET
 
 🧪 En automatización las verás seguido: las **esperas explícitas** de Selenium usan lambdas (`wait.until(d -> d.findElement(...).isDisplayed())`); y procesar una `List<WebElement>` con streams es natural — por ejemplo, extraer los textos de todas las filas de una tabla:
 ```java
@@ -2983,11 +3956,11 @@ List<String> textos = filas.stream()
     .collect(Collectors.toList());
 ```
 
-### 0.15.9 Ejercicios resueltos
+### 0.15.13 Ejercicios resueltos
 
 **Ejercicio 1.** Con una lambda, ordena una lista de Strings por longitud.
 > ```java
-> lista.sort((a, b) -> a.length() - b.length());
+> lista.sort((a, b) -> Integer.compare(a.length(), b.length()));   // mejor que a.length()-b.length() (puede desbordar, §0.13.5)
 > ```
 
 **Ejercicio 2.** Usando streams, obtén la lista de los cuadrados de los números impares de `[1..6]`.
@@ -3090,10 +4063,13 @@ Traducido a tiempo real para n = 1,000,000:
 - **O(n log n):** ~20 segundos. Aceptable.
 - **O(n²):** ~**11.5 días**. Tu programa "se colgó".
 - **O(2ⁿ):** más que la edad del universo. Literalmente nunca termina.
+- **O(n!)** (factorial, no está en la tabla por lo brutal que es): aún **peor** que O(2ⁿ). Aparece al generar **todas las permutaciones**; ya con n=20 supera el número de átomos de una persona. Solo viable para entradas diminutas. Es la clase más lenta que verás (§1.4).
 
 > 🔑 **Lo que debes sentir al ver esto:** la diferencia entre O(n) y O(n²) **no es "el doble de lento"**. Para datos grandes es la diferencia entre **1 segundo y 11 días**. Por eso en una entrevista, cuando logras bajar una solución de O(n²) a O(n), el entrevistador sonríe: acabas de convertir un programa inservible en uno excelente. **Ese es, literalmente, el juego de la mayoría de los problemas de entrevista.**
 
 🏠 **Analogía de los logaritmos (para que O(log n) no te asuste).** "Log" suena a matemáticas feas, pero la idea es simple: **¿cuántas veces puedo partir n a la mitad hasta llegar a 1?**. Parte 1000 → 500 → 250 → 125 → 62 → 31 → 15 → 7 → 3 → 1. Fueron ~10 pasos. Para un millón, ~20 pasos. **Cada vez que un algoritmo "descarta la mitad" en cada paso, es O(log n)**, y es asombrosamente rápido: duplicar los datos solo añade *un* paso. Por eso buscar en un directorio telefónico ordenado abriendo por la mitad es tan veloz.
+
+> 🔑 **¿Log en qué base?** En Big-O el log es **base 2** (log₂), porque "partir a la mitad" es dividir entre 2. Por eso log₂(1.000.000) ≈ 20. **Importante:** la **base no cambia la clase de complejidad**. Un log en base 2, base 10 o base e solo difieren por una **constante** multiplicativa (`log₂ n = log₁₀ n / log₁₀ 2`), y por la Regla 2 (ignora constantes) todas son **O(log n)**. Por eso nunca verás escrito "O(log₂ n)": se escribe O(log n) a secas.
 
 ## 1.4 Las siete complejidades, una por una
 
@@ -3151,10 +4127,16 @@ for (int x : arr) {   // n vueltas
 Un bucle lineal que en cada vuelta hace algo logarítmico, o los algoritmos de ordenamiento eficientes.
 
 ```java
-Arrays.sort(arr);   // los métodos de ordenamiento de Java son O(n log n)
+Arrays.sort(arr);   // ordenar es, en general, O(n log n)
 ```
 
 🔑 **Clave de entrevista:** **no se puede ordenar comparando elementos más rápido que O(n log n)**. Si tu solución empieza por `sort(...)`, su piso de complejidad es O(n log n). A veces vale la pena (ordenar simplifica el problema); a veces el entrevistador quiere que evites ordenar para llegar a O(n).
+
+⚠️ **El matiz que casi nadie dice (verificado 2026-06-19).** No todos los `sort` de Java son iguales:
+> - `Arrays.sort(int[])` y demás **primitivos** usan **Dual-Pivot Quicksort**: promedio O(n log n), pero **peor caso O(n²)** (entradas adversarias). No es estable (los primitivos no tienen "identidad" que preservar, así que da igual).
+> - `Arrays.sort(Object[])` y `Collections.sort(...)` usan **TimSort**: O(n log n) **garantizado** en el peor caso y **estable** (conserva el orden relativo de elementos iguales).
+>
+> Para la mayoría de entrevistas basta decir "O(n log n)", pero si te preguntan por el peor caso de ordenar un `int[]`, la respuesta correcta es **O(n²) en teoría** (raro en la práctica).
 
 ### O(n²) — Cuadrática: "todos contra todos"
 
@@ -3271,6 +4253,14 @@ Set<Integer> visto = new HashSet<>();
 for (int x : arr) visto.add(x);   // el Set puede llegar a tener n elementos
 ```
 
+⚠️ **El espacio oculto: la RECURSIÓN cuesta memoria aunque no crees estructuras.** Cada llamada recursiva pendiente ocupa un marco en la **pila de llamadas** (call stack, ver Pilas §3.6). Por eso una función recursiva consume **O(profundidad de la recursión)** de espacio, aunque no declares ni un arreglo. Ejemplos:
+> - Recursión sobre un **árbol balanceado**: la pila baja tan hondo como la altura → **O(log n)** espacio.
+> - Recursión sobre un árbol degenerado o una lista → **O(n)** espacio (y riesgo de `StackOverflowError`).
+>
+> Moraleja: una solución recursiva "sin estructuras extra" **no** es O(1) de espacio; es O(profundidad). Es un descuido clásico al analizar complejidad.
+
+🔬 **O, Θ y Ω (la familia de notaciones, para que no te pillen):** **O** (Big-O) es una **cota superior** ("no será peor que…"); **Ω** (Omega) es una **cota inferior** ("no será mejor que…"); **Θ** (Theta) es una **cota ajustada** (cuando la superior y la inferior coinciden, es el crecimiento exacto). En rigor, decir que la búsqueda lineal es Θ(n) en el peor caso es más preciso que O(n). Pero **en entrevista, por costumbre, casi todo el mundo dice "Big-O"** y se refiere al **peor caso** salvo que aclaren lo contrario. Conocer la diferencia te hace ver riguroso; usar "Big-O" para todo es lo aceptado en la práctica.
+
 🔑 **Clave de entrevista — el trade-off tiempo/espacio:** muchísimas optimizaciones **cambian espacio por tiempo**. En Two Sum, pasamos de O(n²) tiempo / O(1) espacio (fuerza bruta) a O(n) tiempo / O(n) espacio (con HashMap). Gastamos memoria para ganar velocidad. El entrevistador a veces pregunta explícitamente: "¿y si no pudieras usar memoria extra?". Saber nombrar el trade-off te hace ver sólido.
 
 ## 1.7 Cómo "leer" la Big-O de un código en 30 segundos
@@ -3297,7 +4287,7 @@ R: Para `n` grande, sí. Pero para `n` **pequeño**, un O(n²) con constantes ch
 R: **O(n)**. Separados se suman (n + n = 2n = O(n)). Solo anidados se multiplican.
 
 **P5. ¿Cuál es la complejidad de `Arrays.sort()` y por qué importa?**
-R: **O(n log n)**. Importa porque si tu solución arranca ordenando, ya no puedes bajar de O(n log n); si necesitas O(n), tienes que resolver **sin ordenar** (típicamente con un HashMap).
+R: **O(n log n)** en general. Importa porque si tu solución arranca ordenando, ya no puedes bajar de O(n log n); si necesitas O(n), tienes que resolver **sin ordenar** (típicamente con un HashMap). *Matiz fino:* sobre `int[]` (primitivos) usa Dual-Pivot Quicksort, cuyo **peor caso teórico es O(n²)**; solo sobre objetos (`Object[]`/`Collections.sort`) con TimSort la cota O(n log n) está **garantizada** (y es estable).
 
 ✅ **Autoevaluación de la Parte 1** (sin mirar):
 1. ¿Por qué Big-O cuenta pasos y no segundos?
@@ -3485,7 +4475,7 @@ int[] c = a.clone();                    // también copia
 
 No reinventes; para arreglos, Java trae utilidades (recuerda `import java.util.Arrays;`):
 ```java
-Arrays.sort(arr);                 // ordena ascendente (in place) — O(n log n)
+Arrays.sort(arr);                 // ordena ascendente (in place) — O(n log n) promedio
 Arrays.fill(arr, 7);              // pone 7 en todas las posiciones
 int[] copia = Arrays.copyOf(arr, arr.length);       // copia
 int[] trozo = Arrays.copyOfRange(arr, 1, 4);        // sub-arreglo de índices 1,2,3
@@ -3494,6 +4484,8 @@ boolean iguales = Arrays.equals(a, b);              // compara CONTENIDO (no usa
 int pos = Arrays.binarySearch(arr, 30);             // búsqueda binaria (requiere arreglo ordenado)
 ```
 ⚠️ **`a == b` con arreglos compara referencias** (si son el mismo objeto), **no el contenido**. Para comparar contenido usa `Arrays.equals(a, b)`.
+
+🔧 **Matiz sobre `Arrays.sort` (verificado 2026-06-19):** sobre **primitivos** (`int[]`, `double[]`, …) usa Dual-Pivot Quicksort → O(n log n) promedio pero **O(n²) en el peor caso** (y **no** estable). Sobre **objetos** (`Object[]`) y con `Collections.sort(...)` usa **TimSort** → O(n log n) **garantizado** y **estable**. Ver Parte 1, §1.4 para el detalle.
 
 ### 1.8 Cómo funciona por dentro (por qué el acceso es O(1))
 
@@ -3582,11 +4574,13 @@ boolean tiene = lista.contains(99);   // ¿está el 99? -> true
 
 ## 1-B. STRINGS (texto) · VERSIÓN SUPREMA
 
-> 🔗 **Dependencias de aprendizaje:** arreglos (un String es, en esencia, un arreglo de caracteres) · variables y bucles. Lo tratamos **aparte** de los arreglos porque, aunque se parecen, los Strings tienen dos rasgos propios (inmutabilidad y comparación) que SIEMPRE caen en entrevistas.
+> 🔗 **Dependencias de aprendizaje:** arreglos (piensa en un String como una secuencia de caracteres) · variables y bucles. Lo tratamos **aparte** de los arreglos porque, aunque se parecen, los Strings tienen dos rasgos propios (inmutabilidad y comparación) que SIEMPRE caen en entrevistas.
 
 ### 1-B.1 Qué es un String y cómo se declara
 
-Un **String** es una secuencia de caracteres (texto). Conceptualmente es **un arreglo de `char`** (`"hola"` ≈ `['h','o','l','a']`), pero es su propia clase con métodos útiles.
+Un **String** es una secuencia de caracteres (texto). Para razonar sobre él, **piénsalo como una secuencia de caracteres** indexada (`"hola"` ≈ posiciones `['h','o','l','a']`), pero es su propia clase con métodos útiles.
+
+🔧 **Cómo es por dentro (dato factual, verificado 2026-06-19).** Mucha gente repite que "un String es un `char[]`". **Eso era cierto hasta Java 8.** Desde **Java 9** se introdujeron los *Compact Strings*: internamente un `String` guarda un **`byte[]`** más un campo `coder` que indica la codificación usada. Si todos los caracteres caben en **Latin-1** (1 byte por carácter, el caso típico del texto ASCII/europeo), se almacenan a 1 byte cada uno; si hay caracteres que requieren más (por ejemplo, fuera de Latin-1), se usa **UTF-16** (2 bytes por carácter). Esto ahorra memoria sin que tú lo notes. Conclusión para la entrevista: *conceptualmente es una secuencia de caracteres; en la implementación moderna (Java 9+) es un `byte[]` + `coder`, no un `char[]`.*
 ```java
 String saludo = "hola";                 // forma normal (literal)
 String vacio = "";                      // string vacío (longitud 0)
@@ -3656,6 +4650,7 @@ int[] conteo = new int[26];
 for (char ch : "banana".toCharArray()) conteo[ch - 'a']++;   // cuenta cada letra
 // conteo['a'-'a'] = conteo[0] = 3 (tres 'a')
 ```
+⚠️ **Error común — este truco asume `a`–`z` minúsculas.** `ch - 'a'` solo da 0–25 si `ch` está entre `'a'` y `'z'`. Si llega una **mayúscula** (`'A' - 'a'` = −32) o una **letra acentuada/ñ** (índice > 25), accedes **fuera** del arreglo de 26 → `ArrayIndexOutOfBoundsException` o un conteo mal. *Soluciones:* normaliza antes con `s.toLowerCase()`; usa un arreglo de 52 (o mayor) si necesitas mayúsculas y minúsculas por separado; o, para cualquier carácter Unicode (acentos, emojis), usa un `HashMap<Character,Integer>` en vez del arreglo de 26.
 
 ### 1-B.6 Bugs clásicos de Strings
 
@@ -3795,8 +4790,62 @@ anterior.siguiente = aBorrar.siguiente;   // el anterior ahora apunta al siguien
 ### 2.6 Variantes
 
 - **Simplemente enlazada:** cada nodo apunta solo al siguiente (lo que vimos). Una dirección.
-- **Doblemente enlazada:** cada nodo apunta al siguiente **y al anterior** (`anterior` además de `siguiente`). Permite recorrer en ambos sentidos y borrar en O(1) si ya tienes el nodo. Cuesta un puntero extra. (`LinkedList` de Java es doble.)
-- **Circular:** el último apunta de vuelta al primero, formando un anillo (turnos round-robin, buffers).
+- **Doblemente enlazada:** cada nodo apunta al siguiente **y al anterior** (`anterior` además de `siguiente`). Permite recorrer en ambos sentidos y borrar en O(1) si ya tienes el nodo. Cuesta un puntero extra. (`LinkedList` de Java es doble.) La desarrollamos en §2.6-bis.
+- **Circular:** el último apunta de vuelta al primero, formando un anillo (turnos round-robin, buffers). Ver el *ring buffer* al final de §2.6-bis.
+
+### 2.6-bis La lista DOBLEMENTE enlazada, a fondo
+
+🔧 **El porqué.** En la lista simple, borrar un nodo en O(1) exige tener su **anterior** (para reconectar `anterior.siguiente = aBorrar.siguiente`). Pero desde un nodo simple **no puedes mirar hacia atrás**: tendrías que recorrer desde la cabeza para encontrar su anterior → O(n). La **doblemente enlazada** resuelve esto: cada nodo guarda **también** un puntero `anterior`, así desde cualquier nodo llegas a su predecesor en O(1) y lo borras sin recorrer nada.
+
+**Cómo se define el nodo** (un puntero más que el simple):
+```java
+class NodoDoble {
+    int valor;
+    NodoDoble anterior;   // referencia al nodo PREVIO (o null si es el primero)
+    NodoDoble siguiente;  // referencia al nodo SIGUIENTE (o null si es el último)
+
+    NodoDoble(int valor) {
+        this.valor = valor;
+        this.anterior = null;
+        this.siguiente = null;
+    }
+}
+```
+```
+null ◀──[1]◀──▶[2]◀──▶[3]──▶ null
+       ant/sig    doble flecha = cada nodo apunta en ambos sentidos
+```
+
+**Insertar entre dos nodos en O(1)** (dado un nodo `p`, meter `nuevo` justo después). Hay que tocar **cuatro** punteros:
+```java
+NodoDoble nuevo = new NodoDoble(9);
+nuevo.siguiente   = p.siguiente;   // 1) el nuevo mira al que iba después de p
+nuevo.anterior    = p;             // 2) el nuevo mira atrás a p
+if (p.siguiente != null)
+    p.siguiente.anterior = nuevo;  // 3) el de después de p ahora mira atrás al nuevo
+p.siguiente = nuevo;               // 4) p ahora mira adelante al nuevo
+```
+
+**Borrar un nodo dado en O(1)** (sin buscar su anterior — esa es la gran ventaja):
+```java
+public static void borrar(NodoDoble x) {
+    if (x.anterior != null) x.anterior.siguiente = x.siguiente;  // el de atrás salta a x.siguiente
+    if (x.siguiente != null) x.siguiente.anterior = x.anterior;  // el de adelante salta a x.anterior
+    // (si x era la cabeza o la cola, habría que actualizar esos punteros aparte)
+}
+```
+✍️ **Traza — borrar el `[2]` de `[1]◀──▶[2]◀──▶[3]`:**
+```
+estado:   [1] ◀──▶ [2] ◀──▶ [3]
+paso 1 (x.anterior.siguiente = x.siguiente):  [1].siguiente = [3]
+paso 2 (x.siguiente.anterior = x.anterior):   [3].anterior  = [1]
+resultado:  [1] ◀──▶ [3]      (el [2] quedó sin referencias → lo recolecta Java)
+```
+Reconectaste **solo dos punteros**, sin recorrer nada → **O(1)**. En una lista simple esto sería O(n) (habría que encontrar el anterior del [2]).
+
+🔧 **El precio:** un puntero extra por nodo (más memoria) y más punteros que mantener en cada operación (más fácil equivocarse). A cambio: recorrido en ambos sentidos y borrado O(1) desde cualquier nodo. **`LinkedList` de Java es exactamente esto** (doble + punteros a cabeza y cola).
+
+🔄 **El buffer circular (ring buffer).** Variante donde el último nodo apunta de vuelta al primero, formando un **anillo** sin `null`. Su uso estrella: una **cola de tamaño fijo** sobre un arreglo, con dos índices (`frente` y `final`) que **dan la vuelta** con módulo (`indice = (indice + 1) % capacidad`). Cuando el `final` alcanza el `frente`, el buffer está lleno y lo más viejo se sobrescribe. Es ideal para **flujos continuos de tamaño acotado**: los últimos N eventos de un log, audio/streaming en tiempo real, historiales con límite. Ventaja: memoria fija, sin asignar/liberar nodos, todo O(1).
 
 ### 2.7 Cómo funciona por dentro
 
@@ -3804,7 +4853,13 @@ anterior.siguiente = aBorrar.siguiente;   // el anterior ahora apunta al siguien
 
 ### 2.8 Ventajas, desventajas y cuándo usarla
 
-➕ **Ventajas:** inserción/borrado en extremos **O(1)** (sin mover otros); **tamaño dinámico** natural (crece/encoge sin redimensionar); no reserva memoria de más.
+➕ **Ventajas:** **tamaño dinámico** natural (crece/encoge sin redimensionar); no reserva memoria de más; inserción/borrado **O(1)** cuando ya tienes el nodo (o su anterior) y al **inicio** — sin mover los demás.
+
+⚠️ **Matiz importante (no todo extremo es O(1)).** Lo que es realmente O(1) depende del tipo de lista:
+> - **Lista SIMPLE** (la de §2.2–§2.5, solo con `siguiente` y guardando solo la `cabeza`): insertar/borrar **al INICIO es O(1)** (§2.5.a/d), pero **al FINAL es O(n)** porque hay que recorrer hasta el último nodo (§2.5.c). Si ya tienes el nodo anterior, borrar/insertar ahí es O(1).
+> - **`LinkedList` de Java** (doblemente enlazada y con puntero a **cola**): mantiene referencias al primer **y** al último nodo, así que insertar/borrar en **ambos extremos es O(1)** (`addFirst/addLast/removeFirst/removeLast`).
+>
+> Moraleja: "O(1) en extremos" solo es cierto si la lista guarda un puntero a la cola (o es doble). Una lista simple sin puntero a cola es O(n) por el final.
 ➖ **Desventajas:** **acceso por índice O(n)** (sin acceso aleatorio); **memoria extra** por nodo (los punteros); **mala localidad de caché** (nodos dispersos → más lenta en la práctica que un arreglo, aunque ambos sean O(n)).
 ✅ **Úsala cuando:** insertas/borras mucho en extremos y no necesitas índices. Es la base de pilas y colas.
 ❌ **Evítala cuando:** necesitas acceso por índice frecuente (→ arreglo).
@@ -3890,12 +4945,14 @@ Deque<Integer> pila = new ArrayDeque<>();   // una pila de enteros, vacía
 | Método | Qué hace | Ejemplo |
 |---|---|---|
 | `push(x)` | Pone `x` en el tope | `pila.push(5);` |
-| `pop()` | Quita y **devuelve** el tope | `int x = pila.pop();` |
-| `peek()` | **Mira** el tope sin quitarlo | `int t = pila.peek();` |
+| `pop()` | Quita y **devuelve** el tope | `Integer x = pila.pop();` |
+| `peek()` | **Mira** el tope sin quitarlo | `Integer t = pila.peek();` |
 | `isEmpty()` | ¿Está vacía? | `if (pila.isEmpty()) ...` |
 | `size()` | Cuántos elementos hay | `int n = pila.size();` |
 
 Todas son **O(1)** (solo tocan el tope).
+
+⚠️ **Sutileza de tipos (causa de un `NullPointerException` traicionero).** Con `Deque<Integer>`, `pop()` y `peek()` devuelven un **`Integer`** (objeto), no un `int`. Si escribes `int x = pila.pop();` sobre una pila **vacía**, `pop()` con `ArrayDeque` lanza `NoSuchElementException`; y si usaras un método que devuelve `null` y lo asignas a un `int`, el **autounboxing** (`Integer` → `int`) revienta con `NullPointerException`. Regla segura: recibe en **`Integer x = pila.peek();`** y asigna a un `int` **solo después de comprobar que no está vacía**. Además, ⚠️ **`ArrayDeque` no admite `null`**: `pila.push(null)` lanza `NullPointerException` (no puedes usar `null` como elemento centinela).
 
 ### 3.4 Ejemplo de uso, paso a paso
 
@@ -3938,7 +4995,7 @@ public static boolean balanceado(String s) {
 
 ### 3.8 Bugs, cuándo usarla, y práctica
 
-⚠️ **Bug típico — `pop()`/`peek()` sobre pila vacía** lanza excepción. Verifica `isEmpty()` antes.
+⚠️ **Bug típico — `pop()`/`peek()` sobre pila vacía** lanza excepción (`NoSuchElementException` con `ArrayDeque`). Verifica `isEmpty()` antes. ⚠️ **Bug 2 — autounboxing:** asignar el resultado a un `int` cuando podría venir `null` lanza `NullPointerException`; recibe en `Integer` y comprueba primero. ⚠️ **Bug 3 — `null` como elemento:** `ArrayDeque` **no** admite `null` (`push(null)` lanza NPE); no lo uses como centinela.
 ✅ **Úsala cuando:** "lo último primero" — deshacer, paréntesis, historial "atrás", **DFS**, "siguiente mayor".
 
 **P1.** ¿Por qué todas las operaciones de una pila son O(1)?
@@ -3986,12 +5043,14 @@ Queue<Integer> cola = new LinkedList<>();   // una cola de enteros, vacía
 | Método | Qué hace | Ejemplo |
 |---|---|---|
 | `add(x)` / `offer(x)` | Encola al **final** | `cola.add(5);` |
-| `poll()` | Saca y **devuelve** el **frente** (null si vacía) | `int x = cola.poll();` |
-| `peek()` | **Mira** el frente sin sacarlo | `int f = cola.peek();` |
+| `poll()` | Saca y **devuelve** el **frente** (null si vacía) | `Integer x = cola.poll();` |
+| `peek()` | **Mira** el frente sin sacarlo (null si vacía) | `Integer f = cola.peek();` |
 | `isEmpty()` | ¿Está vacía? | `if (cola.isEmpty()) ...` |
 | `size()` | Cuántos hay | `int n = cola.size();` |
 
 Todas O(1).
+
+⚠️ **El bug del autounboxing (importantísimo).** `poll()` y `peek()` devuelven **`Integer`** (objeto), y **devuelven `null` si la cola está vacía**. Si haces `int x = cola.poll();` con la cola **vacía**, Java intenta convertir ese `null` a `int` (autounboxing) y lanza **`NullPointerException`** — un fallo difícil de rastrear porque la línea "parece inocente". Por eso el ejemplo usa **`Integer x = cola.poll();`**: recibe en `Integer`, comprueba `x != null` (o `!cola.isEmpty()` antes) y solo entonces asigna a un `int`.
 
 ### 4.4 Ejemplo de uso, paso a paso
 
@@ -4135,9 +5194,24 @@ for (char c : "banana".toCharArray())
 
 🔧 **Colisiones:** dos claves distintas pueden caer en la misma cubeta (hay infinitas claves y finitas cubetas). Java lo resuelve con **encadenamiento**: la cubeta guarda una **lista** de los pares que cayeron ahí, y al buscar la recorre comparando con `equals`. Con pocas colisiones, esas listas son diminutas y sigue siendo ~O(1).
 
+✍️ **Mini-traza de una colisión.** Supón una tabla con **4 cubetas** (índices 0–3). El índice se calcula como `hashCode % 4`. Insertamos dos claves cuyos hashCode dan el mismo resto:
+```
+put("FB", 1)   →  "FB".hashCode() % 4  = 2   → cubeta[2] = [ ("FB",1) ]
+put("Ea", 2)   →  "Ea".hashCode() % 4  = 2   → ¡COLISIÓN! misma cubeta 2
+               cubeta[2] = [ ("FB",1) ] -> [ ("FB",1), ("Ea",2) ]   (se encadena)
+
+get("Ea")  →  índice 2  →  recorre la cubeta:
+              ¿"FB".equals("Ea")? no  →  ¿"Ea".equals("Ea")? sí  →  devuelve 2
+```
+🔑 La clave: **el hashCode las manda a la misma cubeta, pero `equals` las distingue dentro de ella.** Por eso ambos métodos deben ser consistentes (§5.8). (`"FB"` y `"Ea"` son un par clásico de strings con el mismo `hashCode` en Java — útil para demostrar colisiones.)
+
 🔧 **Factor de carga y rehashing:** si se llena demasiado (en Java, factor de carga > **0.75**), crea un arreglo de cubetas **más grande** (el doble) y **redistribuye** todo — operación O(n) **ocasional** (por eso "O(1) **amortizado**").
 
-🔧 **Peor caso:** si **todas** las claves colisionan en una cubeta (hash pésimo), esa cubeta es una lista de n y buscar es **O(n)**. Java 8+ lo mitiga: si una cubeta acumula muchas colisiones, convierte la lista en un **árbol** (O(log n)). Por eso se dice "**O(1) promedio, O(n) peor caso**".
+🔧 **Peor caso — con el matiz correcto (Java 8+):** si **todas** las claves colisionan en una sola cubeta (hash pésimo o ataque), esa cubeta degenera. Java 8+ lo mitiga con **treeificación**: cuando una cubeta acumula muchas colisiones (umbral 8 entradas, con la tabla ≥ 64 cubetas), convierte esa lista en un **árbol rojo-negro**. El resultado depende de las claves:
+> - Si las claves son **`Comparable`** (como `String` o `Integer`), el árbol ordena por su orden natural y buscar en la cubeta saturada es **O(log n)**.
+> - Si las claves **no son `Comparable`**, el árbol no puede ordenarlas bien y la cubeta sigue comportándose como una lista → **O(n)**.
+>
+> Por convención de entrevista se cita **"O(1) promedio / O(n) peor caso teórico"** (es la respuesta segura). Pero la versión precisa y actualizada es: *con treeificación, una cubeta saturada de claves Comparable es O(log n), no O(n)*. Decir esto en una entrevista demuestra que conoces los internals reales de Java moderno.
 
 ### 5.8 La regla de oro: hashCode + equals
 
@@ -4257,7 +5331,47 @@ Para agregar más niveles, sigues colgando: `raiz.izq.izq = new Nodo(1);` pondr�
    \
     3   ← sin mitades que descartar: buscar es O(n), no O(log n)
 ```
-🔧 **Solución — árboles autobalanceados** (AVL, rojo-negro): se reordenan solos al insertar/borrar para mantener la altura ~log n. Por eso `TreeMap`/`TreeSet` de Java garantizan O(log n) **siempre**. No necesitas implementarlo, **pero debes saber que existe y por qué**.
+🔧 **Solución — árboles autobalanceados** (AVL, rojo-negro): se reordenan solos al insertar/borrar para mantener la altura ~log n. Por eso `TreeMap`/`TreeSet` de Java garantizan O(log n) **siempre**. No necesitas implementarlo, **pero debes saber que existe y por qué**. El §6.5-bis explica el mecanismo.
+
+### 6.5-bis Cómo se autobalancean (avanzado / opcional)
+
+> Esta subsección es **opcional**: para una entrevista típica basta con "existen árboles autobalanceados y mantienen altura O(log n)". Pero entender el **mecanismo** te da una respuesta de nivel senior. Léela cuando ya domines el resto del capítulo.
+
+**La herramienta básica: la ROTACIÓN.** Una rotación es una **reestructuración local** que cambia quién es el padre de quién **sin romper la regla del BST** (izquierda menor, derecha mayor). Reduce la altura de un lado y la sube del otro. Hay dos, espejo una de la otra.
+
+🔧 **Rotación a la IZQUIERDA** (cuando el árbol está cargado a la derecha). El hijo derecho `B` sube y se vuelve la nueva raíz del subárbol; la vieja raíz `A` baja a ser su hijo izquierdo:
+```
+   ANTES (cargado a la derecha)        DESPUÉS (rotación izquierda sobre A)
+        A                                      B
+         \                                    / \
+          B            ──────▶              A   C
+           \
+            C
+```
+La regla del BST se conserva: `A < B < C` antes y después. Lo que cambió es la **forma**: pasamos de altura 3 (lista inclinada) a altura 2 (equilibrado).
+
+🔧 **Rotación a la DERECHA** es el espejo (cuando está cargado a la izquierda): el hijo izquierdo sube y la vieja raíz baja a ser su hijo derecho.
+```
+       ANTES (cargado a la izquierda)     DESPUÉS (rotación derecha sobre C)
+            C                                    B
+           /                                    / \
+          B                ──────▶            A   C
+         /
+        A
+```
+
+✍️ **Traza — por qué arregla el desbalance.** Insertando 1, 2, 3 en un BST normal queda la lista inclinada `1 → 2 → 3` (altura 3, buscar es O(n)). Un **AVL** detecta el desbalance al insertar el 3 (el subárbol derecho de 1 quedó 2 más alto que el izquierdo), hace **una rotación izquierda sobre el 1**, y queda el árbol balanceado con 2 en la raíz, 1 a la izquierda y 3 a la derecha → altura 2, búsqueda O(log n). El mismo dato, reordenado solo.
+
+🔧 **El invariante de un AVL.** Para **cada** nodo, `|altura(subárbol izq) − altura(subárbol der)| ≤ 1` (el "factor de balance" está entre −1, 0 y +1). Tras cada inserción/borrado, el AVL recalcula alturas subiendo hacia la raíz y, en cuanto algún nodo viola el invariante, aplica una o dos rotaciones para restaurarlo. Como nunca deja que un lado supere al otro por más de 1 nivel, la altura se mantiene en **O(log n)** garantizado.
+
+🔧 **La idea del árbol ROJO-NEGRO** (el que usa `TreeMap`/`TreeSet` de Java). En vez de medir alturas, pinta cada nodo de **rojo** o **negro** y obliga a cumplir estas propiedades:
+> 1. La raíz es **negra**.
+> 2. Un nodo **rojo** no puede tener hijos rojos (no hay dos rojos seguidos).
+> 3. **Todo** camino desde un nodo hasta cualquier hoja `null` tiene el **mismo número de nodos negros** (la "altura negra").
+
+🔑 **Por qué eso fuerza O(log n):** como no puede haber dos rojos seguidos (prop. 2) y todos los caminos tienen la misma altura negra (prop. 3), el camino más largo (rojo-negro-rojo-negro…) es **a lo más el doble** del más corto (todo negro). Un árbol donde la rama más larga no pasa del doble de la más corta tiene altura **O(log n)**. Tras insertar/borrar, el árbol restaura las propiedades **recoloreando** nodos y haciendo **rotaciones** (las mismas de arriba).
+
+**AVL vs rojo-negro (la respuesta de entrevista):** el AVL está **más estrictamente balanceado** (búsquedas un pelín más rápidas) pero hace más rotaciones al insertar/borrar; el rojo-negro está **menos balanceado** pero reequilibra más barato → mejor cuando hay muchas inserciones/borrados. Por eso las librerías estándar (incluido Java) eligen **rojo-negro**. Ambos garantizan todas las operaciones en **O(log n)**.
 
 ### 6.6 Los recorridos (recorrer = visitar todos los nodos)
 
@@ -4309,10 +5423,53 @@ Con la misma forma resuelves: ¿balanceado?, suma de nodos, ¿iguales dos árbol
 
 ### 6.8 Operaciones del BST y su costo
 
+**Insertar (recursivo).** Bajas comparando con cada nodo (menor → izquierda, mayor → derecha) hasta encontrar un hueco `null`, y ahí cuelgas el nuevo nodo. La recursión "devuelve el subárbol ya con el nuevo dentro":
+```java
+public static Nodo insertar(Nodo n, int valor) {
+    if (n == null) return new Nodo(valor);          // hueco encontrado: aquí va
+    if (valor < n.valor) n.izq = insertar(n.izq, valor);  // menor → izquierda
+    else if (valor > n.valor) n.der = insertar(n.der, valor); // mayor → derecha
+    // si es igual, no insertamos duplicados (decisión de diseño)
+    return n;                                        // devuelve este subárbol actualizado
+}
+// uso:  raiz = insertar(raiz, 7);
+```
+✍️ Insertar 7 en el BST 8/3/10: 7 < 8 → izquierda (al 3); 7 > 3 → derecha del 3 (está `null`) → cuelga el 7 ahí. Dos comparaciones → O(altura) = O(log n) si está balanceado.
+
+**Borrar (el algoritmo que falta en muchos manuales).** Es la operación difícil del BST porque hay que mantener la regla de orden. Tres casos según cuántos hijos tenga el nodo a borrar:
+
+1. **Hoja (0 hijos):** simplemente lo quitas (el padre lo reemplaza por `null`). Fácil.
+2. **Un solo hijo:** el nodo se reemplaza por su único hijo (el padre "salta" al nieto). Como en una lista.
+3. **Dos hijos (el caso difícil):** no puedes quitarlo sin más. La técnica: lo **reemplazas por su SUCESOR inorden** = el **menor** del subárbol **derecho** (que es el siguiente valor en orden). Copias ese valor en el nodo y luego **borras el sucesor** de su posición original (el sucesor siempre tiene 0 o 1 hijo, así que cae en el caso 1 o 2). *(Alternativa simétrica: el predecesor inorden = el mayor del subárbol izquierdo.)*
+
+```java
+public static Nodo borrar(Nodo n, int valor) {
+    if (n == null) return null;
+    if (valor < n.valor)       n.izq = borrar(n.izq, valor);   // busca a la izquierda
+    else if (valor > n.valor)  n.der = borrar(n.der, valor);   // busca a la derecha
+    else {                                                     // ¡este es el nodo a borrar!
+        if (n.izq == null) return n.der;     // caso 1/2: 0 hijos o solo derecho
+        if (n.der == null) return n.izq;     // caso 2: solo hijo izquierdo
+        // caso 3: dos hijos → buscar el SUCESOR (menor del subárbol derecho)
+        Nodo suc = n.der;
+        while (suc.izq != null) suc = suc.izq;   // baja todo a la izquierda
+        n.valor = suc.valor;                     // copia el valor del sucesor
+        n.der = borrar(n.der, suc.valor);        // y borra el sucesor de su sitio
+    }
+    return n;
+}
+```
+✍️ **Traza — borrar el 8 (raíz, dos hijos) del BST 8/3/10/1/6/14:** el sucesor inorden de 8 es el **menor del subárbol derecho** (raíz 10) → bajando a la izquierda desde el 10 no hay nada, así que el sucesor es **10**. Copiamos 10 en la raíz y borramos el 10 original (que tenía un hijo derecho, 14, → caso 2). Resultado: raíz 10, izquierda 3 (con 1 y 6), derecha 14. Sigue siendo un BST válido (un inorden da 1, 3, 6, 10, 14, ordenado).
+
+🔧 **Espacio de los recorridos (lo que se suele olvidar):**
+> - **DFS (recursivo):** usa la **pila de llamadas**, que llega a tener tantos marcos como la **altura** del árbol → **O(h) espacio**. En un árbol balanceado h = log n → **O(log n)**; en uno degenerado (lista inclinada) h = n → **O(n)**.
+> - **BFS (por niveles, con cola):** la cola llega a contener todo un **nivel** a la vez. El nivel más ancho de un árbol binario es el **último**, con hasta ~n/2 nodos → **O(n) espacio** en el peor caso. Por eso DFS suele gastar menos memoria que BFS en árboles anchos.
+
 | Operación | Big-O (balanceado) | Degenerado |
 |---|---|---|
 | Buscar / Insertar / Borrar | **O(log n)** | O(n) |
-| Recorrer (cualquiera) | **O(n)** | O(n) |
+| Recorrer (cualquiera) | **O(n)** tiempo | O(n) |
+| Espacio del recorrido | DFS **O(h)** = O(log n) · BFS **O(n)** | DFS O(n) · BFS O(n) |
 
 ### 6.9 Ventajas, cuándo usarlo, bugs y práctica
 
@@ -4377,21 +5534,46 @@ PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder())
 
 ```java
 PriorityQueue<Integer> h = new PriorityQueue<>();   // min-heap
-h.add(5);                  // h tiene {5}
-h.add(1);                  // {1, 5}      (el 1 sube a la cima)
-h.add(3);                  // {1, 3, 5}   (1 sigue en la cima)
+h.add(5);                  // arreglo interno: [5]
+h.add(1);                  // [1, 5]       (el 1 sube a la cima por bubble-up)
+h.add(3);                  // [1, 5, 3]    (1 sigue en la raíz; ver traza en §7.5)
 
 System.out.println(h.peek());  // 1   (mira el mínimo, NO lo saca)
-System.out.println(h.poll());  // 1   (saca el mínimo) -> queda {3, 5}
-System.out.println(h.poll());  // 3   -> queda {5}
+System.out.println(h.poll());  // 1   (saca el mínimo) -> queda [3, 5]
+System.out.println(h.poll());  // 3   -> queda [5]
 ```
-✍️ **Traza:** sin importar el orden en que metiste (5,1,3), el heap siempre te entrega **el menor primero** (1, luego 3, luego 5). Eso es lo que lo hace útil.
+✍️ **Traza:** sin importar el orden en que metiste (5,1,3), el heap siempre te entrega **el menor primero** (1, luego 3, luego 5). Eso es lo que lo hace útil. ⚠️ Ojo: uso **corchetes `[...]`** a propósito (el arreglo interno), no llaves `{...}`: `[1, 5, 3]` **no** está ordenado — solo la raíz (índice 0) es el mínimo garantizado. El detalle del bubble-up está en §7.5.
 
 ### 7.5 Cómo funciona por dentro
 
 🔧 Un heap es un **árbol binario completo** (niveles llenos salvo quizá el último) con la **propiedad de heap**: cada padre es ≤ sus hijos (en min-heap), así el mínimo está **siempre en la raíz**. Lo asombroso: se guarda en **un arreglo**, sin punteros, con aritmética de índices — para el nodo en el índice `i`: hijo izquierdo `2i+1`, hijo derecho `2i+2`, padre `(i-1)/2`.
 - **Insertar (bubble up):** pones el nuevo al final y lo **subes** mientras sea menor que su padre → O(log n).
 - **Sacar el mínimo (bubble down):** quitas la raíz, subes el último a la cima y lo **hundes** mientras viole la propiedad → O(log n).
+
+✍️ **Traza del ARREGLO interno** (no es un conjunto: el orden de las posiciones importa). Min-heap, insertando 5, 1, 3:
+```
+add(5):  arreglo = [5]
+         (un solo elemento, ya es heap)
+
+add(1):  se coloca al final          → [5, 1]
+         bubble up: ¿1 < su padre 5? sí → intercambia con el padre (índice 0)
+                                      → [1, 5]
+         (1 es la raíz; ya no tiene padre, para)
+
+add(3):  se coloca al final          → [1, 5, 3]
+         índice del 3 es 2; su padre es (2-1)/2 = 0 → el 1
+         bubble up: ¿3 < su padre 1? no → se queda
+                                      → [1, 5, 3]   ✅ propiedad cumplida
+```
+🔑 Fíjate que el arreglo final es `[1, 5, 3]`, **no** `[1, 3, 5]`: el heap **no está ordenado**, solo garantiza que la **raíz** (índice 0) es el mínimo. El 5 y el 3 conviven sin orden entre sí porque cada uno cumple "ser ≥ su padre". *(Si haces `poll()` repetido sí salen ordenados: 1, 3, 5 — pero eso reordena el heap cada vez.)*
+
+🔧 **El hecho clásico de entrevista — construir un heap de golpe es O(n), no O(n log n) (HEAPIFY).** Si insertas n elementos uno por uno con `add`, cada uno cuesta O(log n) → O(n log n) en total. **Pero** si ya tienes los n elementos en un arreglo, puedes "heapificar" todo de una vez en **O(n)** (esto es lo que hace `new PriorityQueue<>(coleccion)` al recibir una colección). 🔧 **Por qué O(n) y no O(n log n) (la intuición):** el `heapify` arregla los nodos **de abajo hacia arriba**, hundiendo cada uno. La clave es que **la mayoría de los nodos están cerca de las hojas**, donde hundir cuesta muy poco: en un árbol binario, la **mitad** de los nodos son hojas (0 trabajo), un cuarto está a 1 nivel de las hojas (≤1 paso), un octavo a 2 niveles (≤2 pasos)… Solo **un** nodo (la raíz) puede costar los log n pasos completos. La suma `n/2·0 + n/4·1 + n/8·2 + …` **se telescopia** y converge a **O(n)** total, no O(n log n). Pocos nodos caros, muchísimos baratísimos.
+```java
+// Construir un heap desde una colección: O(n), no O(n log n)
+List<Integer> datos = List.of(5, 1, 3, 8, 2, 7);
+PriorityQueue<Integer> h = new PriorityQueue<>(datos);   // heapify en O(n)
+System.out.println(h.peek());   // 1  (el mínimo, ya en la raíz)
+```
 
 ### 7.6 El truco contraintuitivo de Top-K
 
@@ -4629,16 +5811,16 @@ private NodoTrie recorrer(String s) {
 
 | Estructura | Acceso | Buscar | Insertar | Borrar | Orden | Memoria |
 |---|---|---|---|---|---|---|
-| Arreglo | **O(1)** | O(n) | O(n) | O(n) | Si lo ordenas | Baja |
-| Lista enlazada | O(n) | O(n) | **O(1)**† | **O(1)**† | No | Media |
-| Pila / Cola | — | — | **O(1)** | **O(1)** | LIFO / FIFO | Baja |
-| HashMap / HashSet | — | **O(1)*** | **O(1)*** | **O(1)*** | No | Media-alta |
-| TreeMap / TreeSet (BST balanceado) | O(log n) | **O(log n)** | O(log n) | O(log n) | **Sí** | Media |
-| Heap | O(1) (solo mín/máx) | O(n) | O(log n) | O(log n) | Solo la cima | Media |
-| Grafo (lista adyacencia) | — | O(V+E) recorrido | O(1) arista | O(grado) | — | O(V+E) |
-| Trie | — | O(L) | O(L) | O(L) | Por prefijo | Alta |
+| Arreglo | **O(1)** | O(n) | O(n) | O(n) | Si lo ordenas | Baja — O(n) |
+| Lista enlazada | O(n) | O(n) | **O(1)**† | **O(1)**† | No | Media — O(n) |
+| Pila / Cola | — | — | **O(1)** | **O(1)** | LIFO / FIFO | Baja — O(n) |
+| HashMap / HashSet | — | **O(1)*** | **O(1)*** | **O(1)*** | No | Media-alta — O(n) |
+| TreeMap / TreeSet (BST balanceado) | O(log n) | **O(log n)** | O(log n) | O(log n) | **Sí** | Media — O(n) |
+| Heap | O(1) (solo mín/máx) | O(n) | O(log n) | O(log n) | Solo la cima | Media — O(n) |
+| Grafo (lista adyacencia)‡ | — | O(V+E) recorrido | O(1) arista | O(grado) | — | O(V+E) |
+| Trie | — | O(L) | O(L) | O(L) | Por prefijo | Alta — O(Σ·N) |
 
-(*promedio · †en extremo/posición conocida)
+(\*promedio; **peor caso teórico O(n)** si hay muchas colisiones — con treeificación de Java 8+ una cubeta saturada de claves `Comparable` es **O(log n)**, ver §5.7 · †**lista SIMPLE:** O(1) al **inicio** o con el nodo/anterior ya conocido, pero **O(n) al final** sin puntero a cola; `LinkedList` de Java (doble + cola) es O(1) en **ambos** extremos, ver §2.8 · ‡la fila Grafo asume **lista de adyacencia**; con **matriz** el espacio es O(V²) y "¿existe arista?" es O(1) · L = longitud de la palabra; en Trie, Σ = tamaño del alfabeto, N = nº de palabras)
 
 ### 10.2 Cómo elegir la estructura (árbol de decisión)
 
@@ -4722,7 +5904,7 @@ for (int i = 0; i < nums.length; i++) {            // cada número...
 }
 ```
 
-Funciona. Pero cuenta el trabajo: para cada uno de los `n` números, lo comparas con ~`n` números más. Eso es `n × n` = **O(n²)**. Con un millón de números, son ~un billón (10¹²) de comparaciones → tu programa tarda **días** (revisa la tabla de Big-O en la Parte 1: O(n²) con n=1.000.000 ≈ 11.5 días). Inservible.
+Funciona. Pero cuenta el trabajo: para cada uno de los `n` números, lo comparas con ~`n` números más. Eso es `n × n` = **O(n²)**. Con un millón de números, son ~un billón (10¹²) de comparaciones; suponiendo ~10⁹ operaciones simples por segundo (un orden de magnitud razonable para una CPU actual), eso es del orden de **minutos a unas horas según la máquina** (10¹² ÷ 10⁹ ≈ 1.000 s ≈ 16 minutos). Comparado con la versión O(n) que veremos —un millón de operaciones, milisegundos— es inservible.
 
 **La pregunta que abre la puerta:** ¿podemos evitar el segundo bucle? ¿Podemos saber si "el número que me falta" ya apareció, **sin recorrer toda la lista otra vez**?
 
@@ -4983,7 +6165,7 @@ Resultado **[2, 3]** en 4 pasos, recorriendo el arreglo una sola vez, **sin memo
 | Un elemento | `[5]`, obj 5 | `[]` | `izq=der=0`, el while (`<`) no entra: no hay dos elementos. |
 | Pareja en extremos | `[2,3,4,8]`, obj 10 | `[0,3]` (2+8) | Se resuelve en la 1ª iteración. |
 | Sin solución | `[1,2,3]`, obj 100 | `[]` | Los punteros se cruzan. |
-| Negativos (ordenados) | `[-3,-1,2,5]`, obj 1 | `[1,2]` (-1+... no; -3+... ) | Funciona si el orden se respeta. |
+| Negativos (ordenados) | `[-3,-1,2,5]`, obj 1 | `[1,2]` | Índices 1 y 2: −1 + 2 = 1. Funciona igual con negativos mientras el arreglo esté ordenado. |
 
 ### 2.K Las variantes que SÍ caen en entrevistas
 
@@ -5009,7 +6191,35 @@ for (int rapido = 0; rapido < arr.length; rapido++)
 - **Detectar ciclo en lista enlazada (liebre y tortuga):** el lento avanza 1, el rápido 2; si se encuentran, hay ciclo. O(1) espacio.
 - **Encontrar el elemento medio de una lista:** cuando el rápido llega al final, el lento está en el medio.
 
-**Variante 3 — Three Sum (la evolución natural).** Tres números que sumen 0: **ordenas**, fijas un número con un bucle, y para el resto aplicas **dos punteros**. Combina ordenar + dos punteros, O(n²). Clásico absoluto de entrevistas.
+**Variante 3 — Three Sum (la evolución natural).** Tres números que sumen 0: **ordenas**, fijas un número con un bucle, y para el resto aplicas **dos punteros**. Combina ordenar + dos punteros, O(n²). Clásico absoluto de entrevistas. El detalle que más se olvida —y que hace fallar la solución— es **saltar duplicados** para no producir tríos repetidos:
+
+```java
+public static List<List<Integer>> threeSum(int[] nums) {
+    Arrays.sort(nums);                                   // ORDENAR es el prerrequisito de dos punteros
+    List<List<Integer>> res = new ArrayList<>();
+    for (int i = 0; i < nums.length - 2; i++) {
+        if (i > 0 && nums[i] == nums[i - 1]) continue;   // (1) salta el número FIJO repetido
+        int izq = i + 1, der = nums.length - 1;
+        while (izq < der) {
+            int suma = nums[i] + nums[izq] + nums[der];
+            if (suma == 0) {
+                res.add(Arrays.asList(nums[i], nums[izq], nums[der]));
+                izq++; der--;
+                // (2) tras encontrar un trío, salta los duplicados de AMBOS punteros
+                while (izq < der && nums[izq] == nums[izq - 1]) izq++;
+                while (izq < der && nums[der] == nums[der + 1]) der--;
+            } else if (suma < 0) {
+                izq++;                                   // necesito más → sube izq (brújula)
+            } else {
+                der--;                                   // necesito menos → baja der
+            }
+        }
+    }
+    return res;
+}
+```
+
+🗝️ **Por qué los dos saltos de duplicados:** (1) `if (i > 0 && nums[i] == nums[i-1]) continue;` evita fijar dos veces el mismo valor como primer número (produciría tríos idénticos). (2) los `while` tras hallar un trío evitan repetir el **mismo** trío cuando hay valores iguales contiguos. Sin estos saltos, una entrada como `[0,0,0,0]` o `[-1,-1,2,2]` genera tríos repetidos. Es **O(n²)**: el `for` externo por el `while` interno de dos punteros.
 
 ### 2.L Cómo reconocer que un problema pide dos punteros
 
@@ -5147,6 +6357,7 @@ public static int sinRepetir(String s) {
 "Suma máxima de k elementos contiguos":
 ```java
 public static int sumaMaxK(int[] arr, int k) {
+    if (k > arr.length) return -1;                // GUARDA: no hay ventana de tamaño k; sin esto, AIOOBE
     int suma = 0;
     for (int i = 0; i < k; i++) suma += arr[i];   // 1) suma de la PRIMERA ventana
     int max = suma;
@@ -5157,6 +6368,7 @@ public static int sumaMaxK(int[] arr, int k) {
     return max;
 }
 // [2,1,5,1,3,2], k=3 -> 9   (5+1+3)
+// Precondición: 1 <= k <= arr.length. Si k la rebasa, devolvemos -1 (también valdría 0 o lanzar IllegalArgumentException).
 ```
 🗝️ **Clave de la ventana FIJA:** no recalcules la suma entera en cada paso (eso sería O(n·k)). **Suma el que entra y resta el que sale** → cada paso es O(1) → total O(n). Esta línea `suma += arr[der] - arr[der-k]` *es* la esencia del patrón.
 
@@ -5180,7 +6392,7 @@ public static int sumaMaxK(int[] arr, int k) {
 | Un carácter | `"a"` | 1 | Ventana de tamaño 1. |
 | Todos iguales | `"aaaa"` | 1 | La ventana se encoge constantemente a 1. |
 | Todos distintos | `"abcd"` | 4 | La ventana nunca encoge: crece a n. |
-| k mayor que el arreglo (fija) | `[1,2]`, k=5 | manejar aparte | Validar que k ≤ longitud. |
+| k mayor que el arreglo (fija) | `[1,2]`, k=5 | −1 (guarda) | Sin la guarda `if (k > arr.length)`, el bucle inicial accede `arr[2..4]` y revienta con `ArrayIndexOutOfBoundsException`. |
 
 ### 3.L Variantes y follow-ups de entrevista
 
@@ -5478,7 +6690,42 @@ return resultado;
 ```
 
 **Variante 2 — Buscar en un arreglo ordenado pero ROTADO.**
-`[4,5,6,7,0,1,2]` está ordenado pero "rotado". Sigue siendo binaria, pero en cada paso identificas **qué mitad está ordenada** (comparando `arr[izquierda]` con `arr[medio]`) y decides hacia dónde ir según si el objetivo cae en esa mitad ordenada. Es la binaria "con un giro" y es un clásico de FAANG.
+`[4,5,6,7,0,1,2]` está ordenado pero "rotado" (lo cortaron por un punto y pegaron la primera parte al final). Sigue siendo binaria, pero el truco es: en un arreglo rotado, al partir por el medio **al menos una de las dos mitades siempre está perfectamente ordenada**. En cada paso identificas **qué mitad está ordenada** (comparando `arr[izquierda]` con `arr[medio]`) y, si el objetivo cae dentro del rango de esa mitad ordenada, buscas ahí; si no, te vas a la otra mitad. Es la binaria "con un giro" y un clásico absoluto de FAANG.
+
+```java
+public static int buscarRotado(int[] arr, int objetivo) {
+    int izq = 0, der = arr.length - 1;
+    while (izq <= der) {
+        int medio = izq + (der - izq) / 2;
+        if (arr[medio] == objetivo) return medio;          // encontrado
+
+        if (arr[izq] <= arr[medio]) {                      // ¿la mitad IZQUIERDA está ordenada?
+            // sí: arr[izq..medio] es creciente
+            if (arr[izq] <= objetivo && objetivo < arr[medio])
+                der = medio - 1;                           // el objetivo cae en la izquierda ordenada
+            else
+                izq = medio + 1;                           // descártala, busca a la derecha
+        } else {                                           // entonces la mitad DERECHA está ordenada
+            // arr[medio..der] es creciente
+            if (arr[medio] < objetivo && objetivo <= arr[der])
+                izq = medio + 1;                           // el objetivo cae en la derecha ordenada
+            else
+                der = medio - 1;                           // descártala, busca a la izquierda
+        }
+    }
+    return -1;                                             // no está
+}
+```
+
+🗝️ **La pregunta clave del paso:** *"¿qué mitad está ordenada?"* Se responde con `arr[izq] <= arr[medio]`: si es cierto, la izquierda es la ordenada; si no, lo es la derecha. Sobre la mitad ordenada **sabes su rango exacto** (sus extremos), así que puedes decidir con certeza si el objetivo está dentro de ella.
+
+✍️ **Traza breve** sobre `arr = [4,5,6,7,0,1,2]`, buscando `objetivo = 0`:
+
+**Iteración 1:** `izq=0, der=6`. `medio = 0+(6-0)/2 = 3`, `arr[3]=7`. ¿7==0? No. ¿`arr[0]=4 <= arr[3]=7`? Sí → mitad izquierda ordenada (4..7). ¿`4 <= 0 < 7`? No (0 no está en [4,7)) → descártala → `izq = 4`.
+**Iteración 2:** `izq=4, der=6`. `medio = 4+(6-4)/2 = 5`, `arr[5]=1`. ¿1==0? No. ¿`arr[4]=0 <= arr[5]=1`? Sí → mitad izquierda ordenada (0..1). ¿`0 <= 0 < 1`? **Sí** → busca ahí → `der = 4`.
+**Iteración 3:** `izq=4, der=4`. `medio = 4`, `arr[4]=0`. ¿0==0? **¡Sí!** → `return 4`.
+
+**Resultado: posición 4.** Sigue siendo O(log n): cada paso descarta media zona, igual que la binaria normal.
 
 **Variante 3 — "Búsqueda binaria sobre la respuesta".**
 La más avanzada y la que más impresiona. A veces no buscas en un arreglo, sino en un **rango de respuestas posibles**. Ejemplo: "¿cuál es la menor capacidad de un barco para enviar todos los paquetes en D días?". La capacidad posible va de un mínimo a un máximo; haces **búsqueda binaria sobre ese rango de capacidades**, y para cada capacidad candidata verificas (con una función auxiliar) si es factible. La señal: "minimiza/maximiza un valor tal que se cumpla una condición monótona".
@@ -5581,6 +6828,8 @@ factorial(4) = 4 * 6 = 24, devuelve 24, se desapila
 ```
 **Resultado: 24.** Observa el patrón: **primero se apilan todas las llamadas hasta el caso base, luego se resuelven de adentro hacia afuera.**
 
+> ⚠️ **Cuidado con el desbordamiento:** este `factorial` devuelve `int`, y `13!` ya supera el máximo de un `int` (~2.147 millones), así que para `n ≥ 13` el resultado **desborda** y sale basura (sin error visible). Para `n` grande usa `long` (aguanta hasta 20!) o `BigInteger` (sin límite). La lógica recursiva es idéntica; solo cambia el tipo.
+
 ### 5.F Ejemplo 2: suma de un arreglo (recursión sobre una colección)
 
 ```java
@@ -5601,6 +6850,7 @@ public static String invertir(String s) {
 }
 // invertir("abc") = invertir("bc") + 'a' = (invertir("c")+'b') + 'a' = ("c"+'b')+'a' = "cba"
 ```
+> ⚠️ **Nota de eficiencia:** esta versión es didáctica pero **O(n²)**: cada nivel hace `s.substring(1)`, que **crea un String nuevo** copiando casi toda la cadena. La forma eficiente recorre con **dos índices** que se acercan e intercambia caracteres in-place sobre un `char[]` (o un `StringBuilder`), en **O(n)** tiempo y sin crear un String por nivel — es exactamente la variante "palíndromo / extremos que se acercan" de **dos punteros** (Patrón 2).
 
 ### 5.H Ejemplo 4: Fibonacci, y POR QUÉ la recursión ingenua es lenta
 
@@ -5621,7 +6871,23 @@ public static int fib(int n) {
   fib(2) fib(1) ...      ...        ← fib(2) se calcula 3 veces, fib(3) dos veces...
 ```
 `fib(3)` se calcula 2 veces, `fib(2)` 3 veces, y empeora con n. Esto es **O(2ⁿ)** — exponencial, inservible para n grande (fib(50) haría ~mil millones de llamadas).
-🗝️ **La cura es la memoización** → guardar cada resultado la primera vez para no recalcularlo. Eso convierte O(2ⁿ) en **O(n)**, y es justo el tema del Patrón 13 (Programación Dinámica). *La recursión es la puerta a la DP.*
+
+🗝️ **La cura es la memoización** → guardar cada resultado la primera vez para no recalcularlo. La idea: antes de calcular `fib(n)`, mira si ya lo tienes guardado; si sí, lo devuelves al instante; si no, lo calculas **una sola vez** y lo guardas. Cada `fib(k)` se calcula entonces a lo más una vez → **O(n)**.
+
+```java
+public static int fib(int n) {
+    return fibMemo(n, new int[n + 1]);             // memo[k]=0 significa "aún no calculado"
+}
+private static int fibMemo(int n, int[] memo) {
+    if (n <= 1) return n;                          // casos base
+    if (memo[n] != 0) return memo[n];              // ya lo calculé: lo reutilizo (O(1))
+    memo[n] = fibMemo(n - 1, memo) + fibMemo(n - 2, memo);  // lo calculo UNA vez y lo guardo
+    return memo[n];
+}
+```
+
+Con esto, el árbol de llamadas deja de duplicarse: cada `fib(k)` se resuelve la primera vez y las demás veces sale del `memo`. Pasamos de **O(2ⁿ)** a **O(n)** tiempo (a costa de O(n) de espacio para el `memo`). Esto es justo el tema del **Patrón 13 (Programación Dinámica)**, donde se profundiza (memoización *top-down* vs. tabulación *bottom-up*). *La recursión es la puerta a la DP.*
+> ⚠️ *Nota:* este `memo` con `int[]` aprovecha que `fib(k)` nunca es 0 para `k ≥ 1`, así que "0 = no calculado" funciona aquí; con valores que sí puedan ser 0 usa un `Integer[]` (inicializado a `null`) o un `HashMap` para distinguir "no calculado" de "calculado y vale 0".
 
 ### 5.I Recursión vs. iteración
 
@@ -5650,6 +6916,15 @@ Cuando enfrentes un problema recursivo, sigue esto en orden:
 
 - **Tiempo:** (número de llamadas) × (trabajo por llamada). Una recursión lineal (1 llamada por nivel, n niveles) es O(n). Una con 2 llamadas por nivel sin memoizar es O(2ⁿ).
 - **Espacio:** O(profundidad máxima de la recursión), por la pila de llamadas. Una recursión lineal de profundidad n usa O(n) de pila aunque no cree estructuras.
+
+### 5.L-bis Casos borde de la recursión
+
+| Caso | Qué pasa | Cómo manejarlo |
+|---|---|---|
+| Entrada vacía (lista `[]`, string `""`) | Debe caer **directo** en el caso base sin recursión | Asegúrate de que el caso base cubra el tamaño 0 (ej. `suma([], 0)` → `i==length` → 0). |
+| Profundidad 0 / 1 | El caso base (o un nivel) responde sin recursión real | `factorial(0)=factorial(1)=1`; verifícalo a mano. |
+| Entrada muy grande (profunda) | La pila de llamadas puede desbordar → `StackOverflowError` | Convierte a iterativo (con pila explícita) si la profundidad puede ser enorme. |
+| Sin caso base alcanzable | Recursión infinita → `StackOverflowError` | El caso recursivo debe **acercarse** al caso base en cada llamada. |
 
 ### 5.M Cómo reconocer que un problema pide recursión
 
@@ -5806,6 +7081,15 @@ Es **inevitablemente exponencial** porque la *salida misma* es exponencial. ⚠�
 
 🔧 **Optimización — "poda" (pruning):** si puedes detectar temprano que una rama **nunca** llevará a una solución válida, la cortas sin explorarla (ej. en N-reinas, si dos reinas ya se atacan, no sigas). La poda no cambia el peor caso teórico, pero acelera muchísimo en la práctica.
 
+### 6.J-bis Casos borde del backtracking
+
+| Caso | Resultado esperado | Por qué importa |
+|---|---|---|
+| Entrada vacía (`[]`) en subconjuntos | `[[]]` — una sola solución: el subconjunto vacío | El `for` no entra, pero (A) ya guardó la copia de `actual` (vacía). No es `[]` (cero soluciones), es `[[]]` (una solución vacía). |
+| Entrada vacía en permutaciones | `[[]]` — la única ordenación de cero elementos | `actual.size()==0==nums.length` → guarda una copia vacía. |
+| Un solo elemento (`[7]`) | Subconjuntos: `[[], [7]]`; permutaciones: `[[7]]` | Verifica que elige · explora · deshaz funcione con una sola opción. |
+| Guardar referencia en vez de copia | Todos los resultados salen iguales (vacíos) | Bug 2 (§6.I): siempre `new ArrayList<>(actual)`. |
+
 ### 6.K Cómo reconocer que un problema pide backtracking
 
 1. La palabra **"todas/todos"**: "**todas** las combinaciones/permutaciones/subconjuntos/caminos/formas".
@@ -5849,6 +7133,8 @@ Es **inevitablemente exponencial** porque la *salida misma* es exponencial. ⚠�
 > 🔗 **Dependencias de aprendizaje:** la estructura **árbol** (cap. 6 — ahí están los internals; aquí nos enfocamos en *resolver problemas*) · **recursión** (Patrón 5, para DFS) · **colas** (cap. 4, para BFS).
 >
 > 📎 Los internals de los recorridos (los tres DFS, BFS, la plantilla "pide a los hijos y combina") están desarrollados a fondo en el **capítulo 6 — Árboles**. Aquí va el ángulo de **entrevista**: cómo reconocer qué recorrido usar y resolver los problemas típicos.
+>
+> 📌 **Sobre la clase `Nodo`:** en este patrón usamos un nodo de **árbol binario** con tres campos: `valor` (el dato), `izq` (hijo izquierdo) y `der` (hijo derecho), ambos hijos `null` si no existen. La definición completa de la clase está en el **capítulo 6 — Árboles**; aquí la damos por conocida.
 
 ### 7.A La decisión clave: ¿DFS o BFS?
 
@@ -5898,13 +7184,100 @@ public static List<List<Integer>> porNiveles(Nodo raiz) {
 |---|---|---|
 | Altura / profundidad máxima | DFS | 1 + max(hijos) |
 | ¿Está balanceado? | DFS | comparar alturas de hijos |
-| Validar BST | DFS (inorden) | inorden debe salir ordenado |
+| Validar BST | DFS (inorden) | el inorden debe salir **estrictamente creciente** |
 | Suma de caminos raíz→hoja | DFS | acumular al bajar |
 | Recorrido por niveles | BFS | tandas por `cola.size()` |
 | Vista lateral derecha | BFS | el último de cada nivel |
 | Nodo más cercano con valor X | BFS | el primero que aparece |
 
-### 7.D Práctica, con respuestas
+### 7.D La ejecución completa del BFS, paso a paso (la cola y el resultado en cada vuelta)
+
+Usaremos este árbol concreto en todo lo que sigue:
+```
+          1
+        /   \
+       2     3
+      / \     \
+     4   5     6
+```
+
+Trazamos `porNiveles(raiz)` (el código de §7.B), mostrando la **cola** y la **lista `res`** en cada estado:
+
+**Inicio:** `cola = [1]`, `res = []`.
+
+**Vuelta 1 del `while`:** `tam = cola.size() = 1`. `nivel = []`.
+- `i=0`: `poll()` saca `1`. `nivel = [1]`. Encola sus hijos: `cola.add(2)`, `cola.add(3)`.
+- Fin del `for`. `cola = [2, 3]`. `res.add([1])` → `res = [[1]]`.
+
+**Vuelta 2:** `tam = 2` (capturado **antes** del `for`: hay 2 nodos en este nivel). `nivel = []`.
+- `i=0`: `poll()` saca `2`. `nivel = [2]`. Encola `4`, `5`. `cola = [3, 4, 5]`.
+- `i=1`: `poll()` saca `3`. `nivel = [2, 3]`. `3` no tiene `izq`; encola `6`. `cola = [4, 5, 6]`.
+- Fin del `for`. `res.add([2,3])` → `res = [[1], [2,3]]`.
+
+**Vuelta 3:** `tam = 3`. `nivel = []`.
+- `i=0`: `poll()` saca `4`. `nivel = [4]`. `4` no tiene hijos. `cola = [5, 6]`.
+- `i=1`: `poll()` saca `5`. `nivel = [4, 5]`. Sin hijos. `cola = [6]`.
+- `i=2`: `poll()` saca `6`. `nivel = [4, 5, 6]`. Sin hijos. `cola = []`.
+- Fin del `for`. `res.add([4,5,6])` → `res = [[1], [2,3], [4,5,6]]`.
+
+**Comprobación del `while`:** `cola` está vacía → termina.
+
+**Resultado: `[[1], [2,3], [4,5,6]]`.** Fíjate en el corazón del truco: en la Vuelta 2 capturamos `tam = 2` **antes** de empezar a sacar; aunque dentro del `for` la cola crece a `[3,4,5,6]` al encolar hijos, el `for` solo da 2 vueltas, así que los hijos (nivel siguiente) **no se mezclan** con el nivel actual.
+
+### 7.E Los tres recorridos DFS (preorden, inorden, postorden)
+
+DFS baja por una rama hasta el fondo antes de probar la siguiente. Lo único que cambia entre los tres órdenes es **cuándo "visitas" la raíz** respecto a sus hijos:
+
+> 🗝️ **Regla mnemónica — dónde cae la raíz:**
+> - **PRE**orden → la raíz **PRIMERO** (raíz · izq · der). "Pre" = antes de los hijos.
+> - **IN**orden → la raíz **EN MEDIO** (izq · raíz · der). "In" = entre los hijos.
+> - **POST**orden → la raíz **AL FINAL** (izq · der · raíz). "Post" = después de los hijos.
+
+```java
+void pre(Nodo n)  { if (n == null) return; visita(n); pre(n.izq); pre(n.der); }   // raíz, izq, der
+void in(Nodo n)   { if (n == null) return; in(n.izq); visita(n); in(n.der); }     // izq, raíz, der
+void post(Nodo n) { if (n == null) return; post(n.izq); post(n.der); visita(n); } // izq, der, raíz
+```
+
+Sobre el **mismo árbol** de §7.D, la salida de cada uno (`visita` imprime el valor):
+```
+Preorden  (raíz·izq·der): 1 2 4 5 3 6
+Inorden   (izq·raíz·der): 4 2 5 1 3 6
+Postorden (izq·der·raíz): 4 5 2 6 3 1
+```
+
+🔑 **Por qué importa cada orden en entrevista:**
+- **Inorden** sobre un **BST** produce los valores **estrictamente crecientes** → es la forma directa de **validar un BST** (§7.F) y de obtener el "k-ésimo menor".
+- **Preorden** sirve para **clonar/serializar** un árbol (visitas la raíz antes de bajar, reconstruyes de arriba hacia abajo).
+- **Postorden** sirve cuando un nodo necesita el resultado de **sus hijos antes que el suyo** (calcular altura, diámetro, "borrar el árbol" liberando hijos antes que el padre).
+
+### 7.F Bugs clásicos (y POR QUÉ ocurren)
+
+**Bug 1 — No capturar `cola.size()` ANTES del `for` interno (BFS).** Si en lugar de `int tam = cola.size();` y `for (i=0; i<tam; i++)` escribes `for (i=0; i < cola.size(); i++)`, el límite se reevalúa en cada vuelta y **crece** conforme encolas hijos. *Cómo se manifiesta:* los niveles se **mezclan** (metes hijos del nivel siguiente en el `nivel` actual) y el resultado deja de estar separado por niveles. *Solución:* fija `tam` en una variable **antes** de empezar a sacar.
+
+**Bug 2 — Validar BST comparando solo con los hijos directos.** Comprobar únicamente `n.izq.valor < n.valor < n.der.valor` es insuficiente: un nodo en el subárbol izquierdo puede ser mayor que un ancestro lejano y aun así pasar esa comprobación local. *Solución:* valida con **inorden estrictamente creciente** (o lleva límites `(min, max)` que se estrechan al bajar).
+
+**Bug 3 — El `prev` int al validar BST por inorden.** Para verificar "estrictamente creciente" guardas el valor anterior en `prev` y comparas `valor > prev`. Si declaras `int prev = Integer.MIN_VALUE`, un árbol cuyo nodo más a la izquierda **valga exactamente `Integer.MIN_VALUE`** te dará un falso negativo (no es "> " que el valor inicial). *Solución:* usa `long prev = Long.MIN_VALUE` (un valor imposible para un `int`), o un `Integer prev = null` y trata el primer nodo como caso especial.
+
+**Bug 4 — Olvidar el caso `raiz == null`.** Si no devuelves temprano con el árbol vacío, el BFS hace `cola.add(null)` y luego `null.izq` lanza `NullPointerException`; el DFS recursivo, en cambio, suele estar protegido por su caso base `if (n == null) return`. *Solución:* maneja el árbol vacío explícitamente (como hace la plantilla BFS de §7.B).
+
+### 7.G La complejidad, derivada
+
+- **Tiempo: O(n)** en DFS y en BFS. Cada nodo se **visita exactamente una vez** (se apila/desapila o se encola/saca una sola vez), y el trabajo por nodo es O(1). `n × O(1) = O(n)`.
+- **Espacio (DFS):** O(h), donde `h` es la **altura** del árbol — es la profundidad máxima de la pila de llamadas recursiva. En un árbol balanceado `h ≈ log n` (O(log n)); en una **lista degenerada** (cada nodo con un solo hijo) `h = n` (O(n)).
+- **Espacio (BFS):** O(ancho), donde "ancho" es el **máximo número de nodos en un mismo nivel**, porque la cola llega a contener un nivel entero. En un árbol balanceado el último nivel tiene ~n/2 nodos → **O(n)**.
+- 🔑 **Trade-off DFS vs BFS:** DFS gasta memoria proporcional a la **altura**; BFS, proporcional al **ancho**. En un árbol muy profundo y angosto, DFS es más caro en espacio; en uno ancho y poco profundo, lo es BFS.
+
+### 7.H Casos borde
+
+| Caso | Entrada | Comportamiento esperado | Por qué importa |
+|---|---|---|---|
+| Árbol vacío | `raiz = null` | BFS devuelve `[]`; DFS no entra (caso base) | Debe no lanzar `NullPointerException` (ver Bug 4). |
+| Un solo nodo | solo la raíz | BFS: `[[valor]]`; DFS: visita 1 vez | El nivel único / la rama de longitud 1. |
+| Lista degenerada | cada nodo con un único hijo | Correcto, pero DFS usa pila O(n) | Riesgo de `StackOverflowError` si es muy profunda. |
+| BST con valor `Integer.MIN_VALUE` | nodo izq = MIN_VALUE | Validar BST con `long prev` da `true` | El `prev` int daría un falso negativo (Bug 3). |
+
+### 7.I Práctica, con respuestas
 
 **P1.** "Devuelve los valores nivel por nivel". ¿DFS o BFS y por qué?
 > BFS: la respuesta se organiza por niveles, justo lo que da la cola procesando por tandas.
@@ -6022,7 +7395,23 @@ public static int[] diasMasCaluroso(int[] t) {
 }
 // [73,74,75,71,69,72,76,73] -> [1,1,4,2,1,1,0,0]
 ```
-✍️ **Traza parcial:** con `i=1` (74 > 73 del tope) → resuelve el día 0: `res[0]=1-0=1`. Cada índice entra y sale una vez → O(n).
+✍️ **Traza completa** de `[73,74,75,71,69,72,76,73]`. La pila guarda **índices**; a su lado pongo entre paréntesis la temperatura de cada índice para leerla mejor. `res` empieza todo en 0:
+```
+i=0 t=73 : pila vacía → push 0.                          pila=[0(73)]            res=[0,0,0,0,0,0,0,0]
+i=1 t=74 : 74>73 → pop 0, res[0]=1-0=1; push 1.          pila=[1(74)]            res=[1,0,0,0,0,0,0,0]
+i=2 t=75 : 75>74 → pop 1, res[1]=2-1=1; push 2.          pila=[2(75)]            res=[1,1,0,0,0,0,0,0]
+i=3 t=71 : 71>75? no → push 3.                           pila=[2(75),3(71)]     res=[1,1,0,0,0,0,0,0]
+i=4 t=69 : 69>71? no → push 4.                           pila=[2(75),3(71),4(69)] res=[1,1,0,0,0,0,0,0]
+i=5 t=72 : 72>69 → pop 4, res[4]=5-4=1;
+           72>71 → pop 3, res[3]=5-3=2;
+           72>75? no → push 5.                            pila=[2(75),5(72)]     res=[1,1,0,2,1,0,0,0]
+i=6 t=76 : 76>72 → pop 5, res[5]=6-5=1;
+           76>75 → pop 2, res[2]=6-2=4;  ← se vacían VARIOS de golpe
+           pila vacía → push 6.                           pila=[6(76)]           res=[1,1,4,2,1,1,0,0]
+i=7 t=73 : 73>76? no → push 7.                            pila=[6(76),7(73)]     res=[1,1,4,2,1,1,0,0]
+fin      : quedan 6 y 7 en la pila → su res ya es 0 (no hay día más caluroso después).
+```
+Resultado final: `[1,1,4,2,1,1,0,0]`. ✅ Fíjate en **i=6 (76)**: un solo elemento "desbloquea" a varios atrapados (el 72 y el 75) en una ráfaga de `pop`. Esa es la esencia de la pila monótona: el trabajo se acumula y se libera de golpe, pero **cada índice se apila y desapila exactamente una vez** → O(n) en total, aunque por dentro haya un `while`.
 
 ### 9.E Cómo reconocerlo y práctica
 
@@ -6066,11 +7455,11 @@ Tienes rangos con inicio y fin —reuniones, reservas, tareas— y quieres: fusi
 ### 10.D Ejemplo: fusionar intervalos
 ```java
 public static int[][] fusionar(int[][] iv) {
-    Arrays.sort(iv, (a, b) -> a[0] - b[0]);             // 1) ordena por inicio
+    Arrays.sort(iv, (a, b) -> Integer.compare(a[0], b[0]));   // 1) ordena por inicio
     List<int[]> res = new ArrayList<>();
     for (int[] cur : iv) {
         if (res.isEmpty() || res.get(res.size()-1)[1] < cur[0])
-            res.add(cur);                               // no solapa: nuevo
+            res.add(new int[]{cur[0], cur[1]});         // no solapa: nuevo (COPIA, no la referencia)
         else
             res.get(res.size()-1)[1] =
                 Math.max(res.get(res.size()-1)[1], cur[1]);  // solapa: extiende el fin
@@ -6079,7 +7468,19 @@ public static int[][] fusionar(int[][] iv) {
 }
 // [[1,3],[2,6],[8,10],[15,18]] -> [[1,6],[8,10],[15,18]]
 ```
-✍️ **Traza:** ordenado ya. [1,3] entra. [2,6]: 2 ≤ 3 → solapa → actual pasa a [1,6]. [8,10]: 8 > 6 → nuevo. [15,18]: nuevo.
+⚠️ **Copiamos para no mutar la entrada.** Un bug sutil y muy común aquí es escribir `res.add(cur);` directamente: eso mete en `res` la **misma referencia** al arreglo de entrada `iv`. Más tarde, la rama "solapa" hace `res.get(...)[1] = Math.max(...)`, que **muta ese mismo arreglo** y, con él, el `iv` que recibió la función — un efecto colateral que sorprende al que la llamó. Por eso insertamos una **copia** con `new int[]{cur[0], cur[1]}`: así el resultado es independiente de la entrada y `iv` queda intacto (salvo el reordenamiento de `Arrays.sort`). El comparador usa `Integer.compare` en vez de `a[0]-b[0]` para evitar **desbordamiento** si los inicios son extremos (ver nota al pie).
+
+✍️ **Traza** (`res` guarda copias; `último` = último intervalo de `res`):
+```
+ordenado: [[1,3],[2,6],[8,10],[15,18]]
+[1,3]  : res vacía → add copia [1,3].                          res=[[1,3]]
+[2,6]  : último[1]=3, ¿3 < 2? no → solapa → último[1]=max(3,6)=6.  res=[[1,6]]
+[8,10] : último[1]=6, ¿6 < 8? sí → no solapa → add copia [8,10].   res=[[1,6],[8,10]]
+[15,18]: último[1]=10, ¿10 < 15? sí → add copia [15,18].           res=[[1,6],[8,10],[15,18]]
+```
+Resultado: `[[1,6],[8,10],[15,18]]`. ✅
+
+🔑 **Caso borde — intervalos que solo se TOCAN (`[1,3]` y `[3,5]`).** ¿`[1,3]` y `[3,5]` se fusionan en `[1,5]` o quedan separados? Depende de la condición. Este código usa `último[1] < cur[0]` para decidir "no solapa"; con `[3,5]`, `último[1]=3` y `cur[0]=3`, así que `3 < 3` es **falso** → cae en la rama "solapa" y los **fusiona** en `[1,5]`. Es una **decisión de diseño**: tratamos el contacto en un punto (`fin == inicio`) como solape. Muchos problemas (p. ej. "Merge Intervals" de LeetCode) lo quieren así. Pero si tu problema considera que dos intervalos que solo comparten un extremo son **separados** (típico cuando el fin es **exclusivo**, como `[1,3)` y `[3,5)`), cambia la condición a `último[1] <= cur[0]` para que el contacto cuente como "no solapa". Verifícalo siempre contra el enunciado: ¿los extremos son inclusivos o exclusivos?
 
 ### 10.E Variantes, reconocimiento y práctica
 
@@ -6130,15 +7531,33 @@ public static List<Integer> kMasFrecuentes(int[] nums, int k) {
         heap.add(n);
         if (heap.size() > k) heap.poll();          // descarta el menos frecuente
     }
-    return new ArrayList<>(heap);                  // los k más frecuentes
+    // 3) extracción final: vacía el heap a una lista (los k más frecuentes)
+    List<Integer> res = new ArrayList<>();
+    while (!heap.isEmpty()) res.add(heap.poll());  // sale del menos al más frecuente
+    return res;
 }
-// [1,1,1,2,2,3], k=2 -> [2,1]
+// [1,1,1,2,2,3], k=2 -> el CONJUNTO {1, 2}
+// (vaciando el heap con poll() salen ordenados de menor a mayor frecuencia: [2, 1])
 ```
+⚠️ **Orden NO garantizado:** un error común es escribir `return new ArrayList<>(heap);` y presentar la salida como si fuera determinista (p. ej. `[2,1]`). Eso devuelve el **orden interno del heap** (cómo quedó el arreglo que respalda al montículo), que **no es** un orden ordenado ni estable. Si necesitas un orden definido, **vacía el heap con `poll()`** (como arriba: sale del menos al más frecuente) o invierte la lista si lo quieres de mayor a menor. Si solo te piden "los K más frecuentes" como conjunto, el orden da igual: el resultado es `{1, 2}`.
+
+📦 **Complejidad:** contar frecuencias es O(n) (recorres los n números una vez). Sea **m** el número de claves distintas: insertar/sacar cada una en un heap de tamaño ≤ k cuesta O(log k), así que el bucle del heap es **O(m log k)**. La extracción final vacía a lo más k elementos: O(k log k). Total: **O(n + m log k)** tiempo, O(m) espacio por el mapa. Cuando k ≪ m, esto vence a ordenar todas las frecuencias (O(m log m)).
+
 🗝️ **Clave:** este problema **combina dos patrones** — hashing (contar frecuencias) + heap (quedarte con los K mayores por frecuencia). Reconocer combinaciones es señal de madurez.
 
 ### 11.D Variantes y práctica
 
 **Variantes:** K-ésimo mayor (un solo número); mezclar K listas ordenadas (heap de cabezas); mediana de un flujo (dos heaps, uno min y uno max, balanceados).
+
+🔑 **La mediana de un flujo (dos heaps) — el clásico avanzado.** Llegan números uno a uno y, tras cada uno, te piden la **mediana** de todo lo visto. Ordenar cada vez sería O(n log n) por consulta. Truco: mantén **dos heaps** que parten los datos a la mitad por valor:
+- un **max-heap** (`bajos`) con la mitad **inferior** de los números — su raíz es el mayor de los bajos;
+- un **min-heap** (`altos`) con la mitad **superior** — su raíz es el menor de los altos.
+
+**Invariante de tamaños:** `bajos` tiene tantos elementos como `altos`, o **uno más**. Así:
+- si los tamaños son iguales → la mediana es el promedio de las dos raíces (`(bajos.peek() + altos.peek()) / 2.0`);
+- si `bajos` tiene uno más → la mediana es `bajos.peek()`.
+
+Al insertar, metes el número en un heap, mueves la raíz al otro si hace falta para respetar el orden (todo `bajos` ≤ todo `altos`) y rebalanceas tamaños. Cada inserción es **O(log n)** y consultar la mediana **O(1)**. Es el ejemplo perfecto de "la estructura correcta convierte un problema caro en uno barato".
 
 **P1.** Para "los 3 números más frecuentes", ¿qué dos estructuras combinas?
 > Un HashMap para contar frecuencias y un min-heap de tamaño 3 por frecuencia.
@@ -6186,7 +7605,33 @@ for (int i = 0; i < arr.length; i++)
 
 ### 12.E La variante potente: prefix sum + hashing
 
-🔑 "**¿Cuántos subarreglos suman exactamente K?**" se resuelve combinando prefix sum con un **HashMap** que cuenta cuántas veces ha aparecido cada suma acumulada. Si en la posición actual la suma acumulada es `S`, y ya viste la suma acumulada `S - K` antes, entonces existe un subarreglo que suma K. Es O(n) y un clásico difícil que mezcla dos patrones.
+🔑 "**¿Cuántos subarreglos suman exactamente K?**" se resuelve combinando prefix sum con un **HashMap** que cuenta cuántas veces ha aparecido cada suma acumulada. La idea: la suma del subarreglo que termina en la posición actual `i` y empieza en algún `j+1` es `suma_hasta_i - suma_hasta_j`. Si quieres que ese subarreglo sume K, necesitas `suma_hasta_j = suma_hasta_i - K`. Así que, llevando la **suma acumulada actual** `S`, la pregunta es: *¿cuántas veces vi antes la suma acumulada `S - K`?* Cada aparición previa marca el inicio de un subarreglo que suma K.
+
+```java
+public static int subarreglosSumaK(int[] nums, int k) {
+    Map<Integer,Integer> conteoSumas = new HashMap<>();
+    conteoSumas.put(0, 1);            // ⭐ CASO BASE: la suma acumulada 0 ya "existió" una vez
+    int suma = 0, total = 0;
+    for (int n : nums) {
+        suma += n;                                       // suma acumulada hasta aquí
+        total += conteoSumas.getOrDefault(suma - k, 0);  // ¿cuántas veces vi la suma (suma - k)?
+        conteoSumas.merge(suma, 1, Integer::sum);        // registra esta suma acumulada
+    }
+    return total;
+}
+// [1,2,3], k=3 -> 2   (los subarreglos [1,2] y [3])
+```
+⭐ **Por qué `conteoSumas.put(0, 1)` es imprescindible.** Sin esa línea no contarías los subarreglos que **empiezan en el índice 0**. Imagina `[3]` con K=3: tras leer el 3, `suma=3` y buscas `suma - k = 0` en el mapa. Si nunca registraste el 0, encuentras 0 apariciones y pierdes la respuesta correcta. La interpretación es: "antes de procesar nada, la suma acumulada vacía vale 0, y eso cuenta como **una** forma de empezar". Con `put(0,1)`, el subarreglo que va desde el principio hasta el actual sí se cuenta.
+
+✍️ **Traza** de `[1,2,3]` con K=3:
+```
+inicio: conteoSumas={0:1}, suma=0, total=0
+n=1 : suma=1.  busca 1-3=-2 en mapa → 0 → total=0.  registra 1 → {0:1, 1:1}
+n=2 : suma=3.  busca 3-3= 0 en mapa → 1 → total=1.  registra 3 → {0:1, 1:1, 3:1}   ← [1,2] suma 3
+n=3 : suma=6.  busca 6-3= 3 en mapa → 1 → total=2.  registra 6 → {0:1, 1:1, 3:1, 6:1} ← [3] suma 3
+return 2
+```
+Es **O(n)** (una pasada, operaciones de mapa O(1) amortizado) y un clásico difícil que mezcla dos patrones. Funciona también con números **negativos** y K=0 (donde la ventana deslizante fallaría, porque esta no asume sumas crecientes).
 
 ### 12.F Reconocimiento y práctica
 
@@ -6238,40 +7683,66 @@ No todo problema es DP. Necesita **dos** propiedades (saber detectarlas es media
 
 ### 13.E Las dos formas de hacer DP
 
-**Forma 1 — Top-down (memoización): recursión + un "papelito".** Es la más intuitiva: escribes la recursión normal y le añades memoria.
+Para que la comparación top-down vs. bottom-up sea justa, usaremos **el mismo problema** en ambas: "**¿de cuántas formas puedo subir una escalera de `n` escalones, con pasos de 1 o 2?**", cuya recurrencia es `formas(i) = formas(i-1) + formas(i-2)` (idéntica en forma a Fibonacci).
+
+> 🔑 **Convención de casos base (impórtate esto antes de codificar).** Definimos `formas(0) = 1` y `formas(1) = 1`. ¿Por qué `formas(0) = 1` y no 0? Porque hay **exactamente una** forma de "subir" una escalera de 0 escalones: **no dar ningún paso** (la "escalera vacía", el camino vacío cuenta como una forma). Y `formas(1) = 1`: un solo paso de 1. A partir de ahí, `formas(2) = formas(1) + formas(0) = 1 + 1 = 2` (dos pasos de 1, o un paso de 2) — que es el valor correcto. Esta es la **convención Fibonacci limpia**: ambos casos base valen 1 y la recurrencia arranca desde `i = 2`. Mezclar convenciones (p. ej. `if (n <= 2) return n;`, que haría `formas(0) = 0`) introduce incoherencias; la mantenemos uniforme en top-down y bottom-up.
+
+**Forma 1 — Top-down (memoización): recursión + un "papelito".** Es la más intuitiva: escribes la recursión natural y le añades memoria.
 ```java
-public static int fib(int n, Map<Integer,Integer> memo) {
-    if (n <= 1) return n;                       // casos base
-    if (memo.containsKey(n)) return memo.get(n); // ¿ya lo calculé? léelo (clave de la DP)
-    int resultado = fib(n-1, memo) + fib(n-2, memo);
-    memo.put(n, resultado);                      // guárdalo antes de retornar
+public static int formas(int n, Map<Integer,Integer> memo) {
+    if (n <= 1) return 1;                         // casos base: formas(0)=1, formas(1)=1
+    if (memo.containsKey(n)) return memo.get(n);  // ¿ya lo calculé? léelo (clave de la DP)
+    int resultado = formas(n-1, memo) + formas(n-2, memo);
+    memo.put(n, resultado);                       // guárdalo antes de retornar
     return resultado;
 }
+// formas(5, new HashMap<>()) -> 8 ;  formas(0, new HashMap<>()) -> 1
 ```
-🔧 La línea `if (memo.containsKey(n)) return memo.get(n);` es **toda** la magia: la primera vez calcula y guarda; las siguientes, lee en O(1). Eso poda el árbol exponencial: cada fib(i) se calcula **una sola vez** → O(n).
+🔧 La línea `if (memo.containsKey(n)) return memo.get(n);` es **toda** la magia: la primera vez calcula y guarda; las siguientes, lee en O(1). Eso poda el árbol exponencial: cada `formas(i)` se calcula **una sola vez** → O(n).
 
-**Forma 2 — Bottom-up (tabulación): llena una tabla con bucles, sin recursión.**
+✍️ **Traza del memo llenándose** para `formas(5)`. La recursión baja primero por la rama izquierda (`n-1`) hasta tocar los casos base, y va **guardando al volver**:
+```
+formas(5) → necesita formas(4) y formas(3)
+  formas(4) → necesita formas(3) y formas(2)
+    formas(3) → necesita formas(2) y formas(1)
+      formas(2) → necesita formas(1) y formas(0)
+        formas(1) = 1   (caso base)
+        formas(0) = 1   (caso base)
+      formas(2) = 1+1 = 2 → memo={2:2}
+      formas(1) = 1   (caso base)
+    formas(3) = 2+1 = 3 → memo={2:2, 3:3}
+    formas(2) → ¡YA ESTÁ EN MEMO! lee 2 (no recalcula)   ← llamada evitada
+  formas(4) = 3+2 = 5 → memo={2:2, 3:3, 4:5}
+  formas(3) → ¡YA ESTÁ EN MEMO! lee 3 (no recalcula)     ← llamada evitada
+formas(5) = 5+3 = 8 → memo={2:2, 3:3, 4:5, 5:8}
+return 8
+```
+Sin memo, `formas(3)` y `formas(2)` se recalcularían múltiples veces (árbol exponencial). Las dos líneas marcadas "llamada evitada" muestran exactamente dónde la memoria **poda** el árbol: la segunda vez que se pide un estado, sale del mapa en O(1).
+
+**Forma 2 — Bottom-up (tabulación): llena la MISMA tabla con bucles, sin recursión.**
 ```java
 public static int formasEscalera(int n) {
-    if (n <= 2) return n;
     int[] dp = new int[n + 1];
-    dp[1] = 1; dp[2] = 2;                      // casos base
-    for (int i = 3; i <= n; i++)
+    dp[0] = 1;                                 // caso base: la escalera vacía (una forma)
+    if (n >= 1) dp[1] = 1;                      // caso base: un paso de 1
+    for (int i = 2; i <= n; i++)
         dp[i] = dp[i-1] + dp[i-2];            // la recurrencia, aplicada en orden
     return dp[n];
 }
+// formasEscalera(0) -> 1 ;  formasEscalera(5) -> 8
 ```
-✍️ **Traza de `formasEscalera(5)`** llenando la tabla:
+✍️ **Traza de `formasEscalera(5)`** llenando la tabla (mismos valores que el memo de arriba):
 ```
-dp[1]=1, dp[2]=2
+dp[0]=1, dp[1]=1
+dp[2] = dp[1]+dp[0] = 1+1 = 2
 dp[3] = dp[2]+dp[1] = 2+1 = 3
 dp[4] = dp[3]+dp[2] = 3+2 = 5
 dp[5] = dp[4]+dp[3] = 5+3 = 8
 return 8
 ```
-De O(2ⁿ) recursivo a **O(n)** con un simple bucle. Y el espacio puede bajar a O(1) si solo guardas los dos últimos valores.
+De O(2ⁿ) recursivo a **O(n)** con un simple bucle. Y el espacio puede bajar a O(1) si solo guardas los dos últimos valores. Nota que el `if (n >= 1)` evita un `dp[1]` fuera de rango cuando `n = 0` (en ese caso el bucle no corre y devolvemos `dp[0] = 1`, coherente con la convención).
 
-🗝️ **¿Cuál usar?** Top-down (memoización) es más fácil de derivar desde la recursión natural y solo calcula los estados que necesitas. Bottom-up evita la pila de llamadas (sin riesgo de StackOverflow) y suele ser un pelín más rápido. Para empezar, **memoización** es más intuitiva.
+🗝️ **¿Cuál usar?** Top-down (memoización) es más fácil de derivar desde la recursión natural y solo calcula los estados que necesitas. Bottom-up evita la pila de llamadas (sin riesgo de StackOverflow) y suele ser un pelín más rápido. Para empezar, **memoización** es más intuitiva. **Lo esencial:** ambas formas resuelven el mismo problema con la misma recurrencia y los mismos casos base; solo cambia el **orden** en que se llenan los estados (de arriba hacia abajo bajo demanda, o de abajo hacia arriba en bloque).
 
 ### 13.F Segundo ejemplo completo: cambio de monedas (mínimo)
 
@@ -6290,7 +7761,24 @@ public static int minMonedas(int[] monedas, int c) {
 }
 // monedas {1,2,5}, c=11 -> 3   (5+5+1)
 ```
-✍️ **Idea de la traza:** `dp[11] = 1 + min(dp[10], dp[9], dp[6])` (quitando una moneda de 1, 2 o 5). Cada `dp[cant]` se calcula una vez reusando los anteriores → O(c × número de monedas).
+✍️ **Traza completa: la tabla `dp[0..11]` llena**, con monedas `{1,2,5}` y c=11. Cada celda `dp[cant]` = mínimo de monedas para formar `cant`. Empieza todo en `c+1 = 12` (el "infinito") y `dp[0]=0`:
+```
+cant :  0   1   2   3   4   5   6   7   8   9  10  11
+dp   :  0   1   1   2   2   1   2   2   3   3   2   3
+```
+Cómo se llenan algunas celdas (recurrencia `dp[cant] = min sobre monedas m ≤ cant de (1 + dp[cant-m])`):
+```
+dp[1]  = 1+dp[0]                         = 1                  (una de 1)
+dp[2]  = min(1+dp[1], 1+dp[0])           = min(2, 1) = 1      (una de 2)
+dp[5]  = min(1+dp[4], 1+dp[3], 1+dp[0])  = min(3, 3, 1) = 1   (una de 5)
+dp[10] = min(1+dp[9], 1+dp[8], 1+dp[5])  = min(4, 4, 2) = 2   (dos de 5)
+dp[11] = min(1+dp[10], 1+dp[9], 1+dp[6]) = min(3, 4, 3) = 3   (5+5+1)
+```
+`dp[11] = 3` ✅ (corresponde a 5+5+1). Cada `dp[cant]` se calcula una vez reusando los anteriores → **O(c × número de monedas)** tiempo, O(c) espacio.
+
+🔧 **Por qué `c + 1` es un "infinito" seguro.** Inicializamos las celdas a `c+1` para representar "imposible / aún no alcanzable". Funciona como infinito por dos razones: (1) la **respuesta nunca puede ser mayor que `c`** monedas — en el peor caso usas `c` monedas de valor 1 para formar `c` —, así que cualquier solución real es `≤ c < c+1` y siempre **gana** al compararse con `c+1` en el `Math.min`; (2) usar `c+1` en vez de `Integer.MAX_VALUE` evita el **desbordamiento** que ocurriría al hacer `1 + Integer.MAX_VALUE` (daría negativo y romperia el `min`). Al final, si `dp[c]` sigue siendo `> c`, es que nunca se pudo formar la cantidad → devolvemos `-1`.
+
+🪙 **Coin change UNBOUNDED (este caso) vs. 0/1.** Aquí asumimos **monedas ilimitadas** de cada denominación (puedes usar el 5 cuantas veces quieras): es el problema *unbounded*. Por eso el bucle de monedas está **dentro** del de cantidades y reusamos `dp[cant - m]` de la **misma** pasada (que ya pudo haber usado esa moneda). El caso **0/1** —cada moneda/objeto se usa **a lo más una vez**, como en la mochila 0/1— se resuelve distinto: se recorre cada objeto una vez y, para no reusarlo, se itera la cantidad **en orden decreciente** (o se usa una tabla 2-D `dp[objeto][cant]`). No los confundas: "monedas ilimitadas" → unbounded; "cada objeto una sola vez" → 0/1.
 
 ### 13.G Bugs clásicos (y por qué)
 
@@ -6303,7 +7791,9 @@ public static int minMonedas(int[] monedas, int c) {
 
 - **Tiempo:** (número de estados/subproblemas) × (trabajo por estado). Escaleras: n estados × O(1) = **O(n)**. Monedas: (c estados) × (nº de monedas) = O(c·monedas).
 - **Espacio:** O(número de estados) por la tabla (a veces reducible a O(1) si solo dependes de los últimos pocos).
-- **El gran salto:** convierte exponencial (O(2ⁿ), O(n!)) en polinomial (O(n), O(n²)). Ese es el superpoder de la DP.
+- **El gran salto:** convierte el **recálculo exponencial** de la recursión ingenua (O(2ⁿ) en Fibonacci/escaleras) en tiempo **lineal o polinomial** (O(n), O(n²)). Ese es el superpoder de la DP.
+
+> ⚠️ **Matiz honesto (no exageres el superpoder).** Es **impreciso** decir que "la DP convierte O(n!) en polinomial" sin más. La DP solo baja la complejidad cuando hay un **número manejable de estados distintos** que se repiten. En problemas con factor exponencial **irreducible** —p. ej. el viajante (TSP), que enumera subconjuntos— la mejor DP conocida es la **DP con máscara de bits (bitmask)**, y su costo es **O(2ⁿ · n)**: muchísimo mejor que O(n!), pero **sigue siendo exponencial**, no polinomial. La DP reduce trabajo repetido; no hace milagros con problemas cuyo espacio de estados es intrínsecamente exponencial.
 
 ### 13.I Cómo reconocer que un problema pide DP
 
@@ -6388,8 +7878,36 @@ public static void mergeSort(int[] arr, int izq, int der) {
     mergeSort(arr, medio + 1, der);                // ordena mitad derecha
     mezclar(arr, izq, medio, der);                 // combina las dos mitades ordenadas
 }
-// mezclar() recorre ambas mitades con dos punteros, tomando siempre el menor.
 ```
+
+🔧 **El corazón del algoritmo: `mezclar()`.** El `mergeSort` de arriba solo divide; **toda la inteligencia está en `mezclar()`**, que combina dos mitades **ya ordenadas** (`arr[izq..medio]` y `arr[medio+1..der]`) en un solo tramo ordenado. La técnica es **dos punteros** (Patrón 2): copia el tramo a un arreglo auxiliar, recorre las dos mitades a la vez con dos índices y vuelca siempre el **menor** de las dos cabezas; al agotarse una mitad, copia los **remanentes** de la otra.
+```java
+private static void mezclar(int[] arr, int izq, int medio, int der) {
+    int[] aux = new int[der - izq + 1];            // auxiliar del tamaño del tramo
+    for (int t = izq; t <= der; t++) aux[t - izq] = arr[t];  // copia el tramo a aux
+    int i = 0;                 // puntero en la mitad IZQUIERDA de aux  (aux[0 .. medio-izq])
+    int j = medio - izq + 1;   // puntero en la mitad DERECHA de aux    (aux[medio-izq+1 .. der-izq])
+    int k = izq;               // puntero de ESCRITURA sobre arr
+    int finIzq = medio - izq;  // último índice de la mitad izquierda en aux
+    int finDer = der - izq;    // último índice de la mitad derecha en aux
+    while (i <= finIzq && j <= finDer) {           // mientras queden en AMBAS mitades
+        if (aux[i] <= aux[j]) arr[k++] = aux[i++]; //   <= mantiene la ESTABILIDAD
+        else                  arr[k++] = aux[j++];
+    }
+    while (i <= finIzq) arr[k++] = aux[i++];        // remanente de la mitad izquierda
+    while (j <= finDer) arr[k++] = aux[j++];        // remanente de la mitad derecha
+}
+```
+✍️ **Traza de `mezclar`** sobre `arr = [2,5,1,8]` con `izq=0, medio=1, der=3` (la mitad izquierda `[2,5]` y la derecha `[1,8]` ya están ordenadas). Primero `aux = [2,5,1,8]`; arranca `i=0` (apunta al 2), `j=2` (apunta al 1), `k=0`:
+```
+aux: [2, 5 | 1, 8]   (la barra | separa las dos mitades)
+paso 1: aux[i]=2 vs aux[j]=1 → 2<=1? NO  → arr[0]=1; j=3, k=1
+paso 2: aux[i]=2 vs aux[j]=8 → 2<=8? SÍ  → arr[1]=2; i=1, k=2
+paso 3: aux[i]=5 vs aux[j]=8 → 5<=8? SÍ  → arr[2]=5; i=2, k=3   (i>finIzq=1: se acaba la izquierda)
+remanente derecha: aux[j]=8 → arr[3]=8; j=4, k=4
+arr = [1, 2, 5, 8]   ✅
+```
+🔑 El `<=` (en vez de `<`) es lo que hace a merge sort **estable**: ante un empate, sale primero el de la mitad izquierda, que venía antes en el arreglo original.
 
 **Complejidad:** **O(n log n) SIEMPRE** (mejor, peor y caso promedio — muy predecible). Espacio **O(n)** (necesita un arreglo auxiliar para mezclar).
 
@@ -6425,6 +7943,36 @@ public static void quickSort(int[] arr, int izq, int der) {
 }
 ```
 
+🔧 **El corazón del algoritmo: `particionar()`.** Igual que en merge sort la magia estaba en mezclar, en quicksort **toda la inteligencia está en `particionar()`**. Usamos el **esquema de Lomuto**, el más fácil de recordar: el **pivote es el último elemento** (`arr[der]`); llevamos un índice `i` que marca la **frontera de los menores** (todo lo que está en `arr[izq..i-1]` ya es menor que el pivote); recorremos con `j` y, cada vez que `arr[j] < pivote`, lo intercambiamos hacia la zona de menores y avanzamos `i`. Al final colocamos el pivote justo después de los menores y devolvemos su posición.
+```java
+private static int particionar(int[] arr, int izq, int der) {
+    int pivote = arr[der];        // pivote = último elemento (esquema de Lomuto)
+    int i = izq;                  // frontera: arr[izq..i-1] serán los MENORES que el pivote
+    for (int j = izq; j < der; j++) {
+        if (arr[j] < pivote) {    // este elemento va a la zona de menores
+            int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;  // swap arr[i] <-> arr[j]
+            i++;                  // amplía la frontera de menores
+        }
+    }
+    int tmp = arr[i]; arr[i] = arr[der]; arr[der] = tmp;      // coloca el pivote en su lugar final
+    return i;                     // posición DEFINITIVA del pivote
+}
+```
+✍️ **Traza de `particionar`** sobre `arr = [5,2,8,1,9,3]`, `izq=0, der=5`. El pivote es `arr[5]=3`; arranca `i=0`. Marco con `[i=...]` dónde está la frontera de menores:
+```
+inicio: arr=[5,2,8,1,9,3]  pivote=3  i=0
+j=0: arr[0]=5 < 3? NO  → nada.                              arr=[5,2,8,1,9,3]  i=0
+j=1: arr[1]=2 < 3? SÍ  → swap arr[0]<->arr[1]; i=1.         arr=[2,5,8,1,9,3]  i=1
+j=2: arr[2]=8 < 3? NO  → nada.                              arr=[2,5,8,1,9,3]  i=1
+j=3: arr[3]=1 < 3? SÍ  → swap arr[1]<->arr[3]; i=2.         arr=[2,1,8,5,9,3]  i=2
+j=4: arr[4]=9 < 3? NO  → nada.                              arr=[2,1,8,5,9,3]  i=2
+fin del for → coloca pivote: swap arr[i=2]<->arr[der=5].    arr=[2,1,3,5,9,8]
+return 2
+```
+Resultado: el pivote **3 quedó en el índice 2**, con todos los menores (`2,1`) a su izquierda y los mayores (`5,9,8`) a su derecha. ✅ Nota que los lados **no quedan ordenados todavía** —solo particionados—; de eso se encargan las dos llamadas recursivas de `quickSort` sobre `arr[0..1]` y `arr[3..5]`.
+
+🔑 **El swap es la clave de "in place":** quicksort reordena dentro del **mismo** arreglo, sin auxiliar (a diferencia de merge sort) — por eso su espacio extra es solo la pila de recursión.
+
 **Complejidad:** **O(n log n) en promedio** (muy rápido en la práctica, con buena localidad de caché). ⚠️ **Peor caso O(n²)** si el pivote elegido es siempre el peor (ej. el menor o mayor de cada parte, que ocurre con datos ya ordenados y pivote fijo). Se mitiga eligiendo el pivote **al azar** o por "mediana de tres". Espacio **O(log n)** (solo la pila de recursión — ordena **in place**).
 
 ➕ **Ventajas:** suele ser el **más rápido en la práctica**; ordena **in place** (O(log n) de memoria, mucho menos que merge sort).
@@ -6434,20 +7982,62 @@ public static void quickSort(int[] arr, int izq, int der) {
 
 ### 🅒 Los O(n²) (debes reconocerlos, rara vez usarlos)
 
-- **Burbuja (bubble sort):** compara pares adyacentes y los intercambia si están desordenados, repetidamente. Los mayores "burbujean" al final. Solo didáctico.
-- **Selección (selection sort):** busca el mínimo y lo pone al frente; repite con el resto. Pocos intercambios, pero siempre O(n²) comparaciones.
+- **Burbuja (bubble sort):** compara pares adyacentes y los intercambia si están desordenados, repetidamente. Los mayores "burbujean" al final. Solo didáctico. ⚠️ **Matiz importante:** su mejor caso es O(n) **solo si añades una bandera de "hubo intercambio"** (`boolean huboSwap`): si una pasada completa no intercambia nada, el arreglo ya está ordenado y cortas. **Sin esa bandera, burbuja es O(n²) siempre**, incluso con la entrada ya ordenada, porque hace todas las pasadas igual.
+- **Selección (selection sort):** busca el mínimo y lo pone al frente; repite con el resto. Pocos intercambios (O(n) swaps), pero **siempre O(n²) comparaciones** — su mejor caso también es O(n²), no mejora con datos ordenados.
 - **Inserción (insertion sort):** toma cada elemento y lo "inserta" en su lugar entre los ya ordenados (como ordenar cartas en la mano). **Es O(n²) en general, pero O(n) si el arreglo ya está casi ordenado** — por eso se usa dentro de TimSort para tramos pequeños.
+
+### 🅒′ Heap sort (con heaps, O(n log n) garantizado e in place)
+
+> 🔗 Depende de la estructura **heap** (cap. 7). Aquí solo la idea; los internals del montículo están en ese capítulo.
+
+🏠 **La idea:** un **heap** te da el máximo (o mínimo) en O(1) y se reorganiza en O(log n). Heap sort explota eso en dos fases: (1) **`heapify`** — convierte el arreglo en un **max-heap** in place en O(n); (2) **n extracciones** — saca repetidamente el máximo (la raíz), lo intercambia con el último elemento del heap, encoge el heap en 1 y vuelve a "hundir" (`sift-down`) la nueva raíz en O(log n). Tras n extracciones, el arreglo queda ordenado de menor a mayor, **sin memoria extra**.
+
+🔑 **Por qué importa:** es el único de los tres "rápidos" que combina **O(n log n) garantizado** (sin peor caso O(n²) como quicksort) **y** espacio O(1) in place (a diferencia de merge sort, que gasta O(n)). Su desventaja es que **no es estable** y tiene peor localidad de caché que quicksort. 📎 La construcción del heap (`heapify`) y el `sift-down` se enseñan paso a paso en el **capítulo 7 — Heaps**.
+
+### 🅒″ Counting sort (ordenamiento NO comparativo, O(n + k))
+
+> 🔗 Depende solo de **arreglos** (cap. 1). Es el más distinto de todos: **no compara elementos entre sí**.
+
+🏠 **La idea:** si sabes que las claves son **enteros en un rango acotado** `[0, k]` (p. ej. edades 0–120, notas 0–100), no necesitas comparar nada. **Cuenta** cuántas veces aparece cada valor y luego **reconstruye** el arreglo en orden recorriendo los conteos. No hay comparaciones: es pura aritmética de índices.
+
+```java
+public static int[] countingSort(int[] arr, int k) {   // claves en [0, k]
+    int[] conteo = new int[k + 1];
+    for (int x : arr) conteo[x]++;                       // 1) cuenta apariciones de cada clave
+    int[] res = new int[arr.length];
+    int idx = 0;
+    for (int v = 0; v <= k; v++)                         // 2) reconstruye en orden ascendente
+        while (conteo[v]-- > 0) res[idx++] = v;          //    emite v tantas veces como apareció
+    return res;
+}
+// arr=[3,1,3,0,2], k=3 -> [0,1,2,3,3]
+```
+✍️ **Traza** de `[3,1,3,0,2]` con k=3:
+```
+conteo tras la fase 1:  indice: 0  1  2  3
+                        valor : 1  1  1  2     (el 3 aparece dos veces)
+reconstrucción: v=0→[0]; v=1→[0,1]; v=2→[0,1,2]; v=3→[0,1,2,3,3]
+res = [0,1,2,3,3]  ✅
+```
+**Complejidad:** **O(n + k)** tiempo y **O(k)** espacio (el arreglo de conteos). Es lineal **cuando k = O(n)** (el rango no es enorme comparado con la cantidad de datos). Si k fuera gigante (p. ej. ordenar 10 números entre 0 y mil millones), el `new int[k+1]` lo arruina — ahí no conviene.
+
+🔑 **¡Esto rompe la "barrera O(n log n)"! (matiz crucial, pregunta de experto).** Te habrán dicho que "ningún ordenamiento baja de O(n log n)". Eso es cierto **solo para ordenamientos por COMPARACIÓN** (burbuja, inserción, merge, quick, heap): cualquier algoritmo que ordene preguntando únicamente "¿a < b?" necesita al menos ~n log n comparaciones en el peor caso (hay n! órdenes posibles y cada comparación da 1 bit de información → log₂(n!) ≈ n log n). Counting sort **no compara elementos**, así que **esa cota no le aplica**: rompe la barrera a O(n + k) **a cambio de una restricción** sobre las claves (enteros en un rango acotado). Lo mismo hace **radix sort** (ordena dígito por dígito usando counting sort como subrutina, O(d·(n+b))). La lección: la barrera O(n log n) es de los **algoritmos por comparación**, no de "ordenar" en abstracto.
 
 ### 🅓 Tabla comparativa maestra de ordenamientos
 
 | Algoritmo | Mejor | Promedio | Peor | Espacio | ¿Estable? | Cuándo |
 |---|---|---|---|---|---|---|
-| Burbuja | O(n) | O(n²) | O(n²) | O(1) | Sí | Solo enseñanza |
+| Burbuja | O(n)* | O(n²) | O(n²) | O(1) | Sí | Solo enseñanza |
 | Selección | O(n²) | O(n²) | O(n²) | O(1) | No | Pocos swaps; casi nunca |
 | Inserción | O(n) | O(n²) | O(n²) | O(1) | Sí | Datos casi ordenados o pequeños |
 | **Merge** | O(n log n) | O(n log n) | **O(n log n)** | O(n) | **Sí** | Garantía O(n log n), estabilidad, datos enormes |
-| **Quick** | O(n log n) | O(n log n) | O(n²) | O(log n) | No | El más rápido en práctica, in place |
+| **Quick** | O(n log n) | O(n log n) | O(n²) | O(log n)† | No | El más rápido en práctica, in place |
 | **Heap** | O(n log n) | O(n log n) | O(n log n) | O(1) | No | O(n log n) garantizado e in place |
+| **Counting** | O(n+k) | O(n+k) | O(n+k) | O(k) | Sí‡ | Claves enteras en rango acotado [0,k] |
+
+> \* **Burbuja O(n)** solo **con bandera de intercambio** (corta si una pasada no hace swaps); sin bandera es O(n²) siempre.
+> † **Quick:** espacio **O(log n) en promedio** (profundidad de la pila de recursión con particiones balanceadas) pero **O(n) en el peor caso** (particiones degeneradas, p. ej. datos ya ordenados con pivote fijo).
+> ‡ **Counting** es estable si se implementa con sumas acumuladas de los conteos colocando de derecha a izquierda; la versión simple de arriba (reconstruir por valor) ordena correctamente pero pierde la identidad de objetos con clave igual.
 
 🔑 **Las respuestas que importan en entrevista:**
 - *¿Cuál es el más rápido en la práctica?* → Quicksort (promedio O(n log n), in place, buena caché).
@@ -6503,7 +8093,7 @@ public static int[] dijkstra(Map<Integer,List<int[]>> g, int origen, int n) {
     Arrays.fill(dist, Integer.MAX_VALUE);
     dist[origen] = 0;
     // min-heap por costo acumulado: {costo, nodo}
-    PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> a[0] - b[0]);
+    PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> Integer.compare(a[0], b[0]));  // compare evita overflow
     heap.add(new int[]{0, origen});
     while (!heap.isEmpty()) {
         int[] actual = heap.poll();
@@ -6520,7 +8110,42 @@ public static int[] dijkstra(Map<Integer,List<int[]>> g, int origen, int n) {
     return dist;
 }
 ```
-✍️ **Traza (idea):** desde el origen con `dist=0`, sacas el más barato, "relajas" sus vecinos (mejoras sus distancias), los metes al heap; el heap siempre te devuelve el siguiente nodo de menor costo total. La operación clave `dist[nodo] + peso < dist[vecino]` se llama **relajación**.
+✍️ **Traza numérica completa.** Grafo dirigido con 4 nodos (`0,1,2,3`) y aristas con peso (origen → destino : peso):
+```
+0 → 1 : 4        0 → 2 : 1
+2 → 1 : 2        2 → 3 : 5
+1 → 3 : 1
+```
+Buscamos las distancias mínimas desde el **origen 0**. `dist` empieza `[0, ∞, ∞, ∞]` y el heap con `(0,0)` (formato `(costo, nodo)`):
+```
+dist inicial: [0, ∞, ∞, ∞]    heap: {(0,0)}
+
+1) poll (0,0): costo 0 == dist[0] ✓. Relaja vecinos de 0:
+     1 (peso 4): 0+4=4 < ∞ → dist[1]=4, add (4,1)
+     2 (peso 1): 0+1=1 < ∞ → dist[2]=1, add (1,2)
+   dist: [0, 4, 1, ∞]    heap: {(1,2),(4,1)}
+
+2) poll (1,2): costo 1 == dist[2] ✓. Relaja vecinos de 2:
+     1 (peso 2): 1+2=3 < 4 → dist[1]=3, add (3,1)   ← mejora el camino a 1 (vía 2)
+     3 (peso 5): 1+5=6 < ∞ → dist[3]=6, add (6,3)
+   dist: [0, 3, 1, 6]    heap: {(3,1),(4,1),(6,3)}
+
+3) poll (3,1): costo 3 == dist[1] ✓. Relaja vecinos de 1:
+     3 (peso 1): 3+1=4 < 6 → dist[3]=4, add (4,3)   ← mejora el camino a 3 (vía 1)
+   dist: [0, 3, 1, 4]    heap: {(4,1),(4,3),(6,3)}
+
+4) poll (4,1): costo 4 > dist[1]=3 → ENTRADA OBSOLETA, `continue` (la 1 ya se fijó en 3)
+   dist: [0, 3, 1, 4]    heap: {(4,3),(6,3)}
+
+5) poll (4,3): costo 4 == dist[3] ✓. El nodo 3 no tiene vecinos salientes → nada que relajar.
+   dist: [0, 3, 1, 4]    heap: {(6,3)}
+
+6) poll (6,3): costo 6 > dist[3]=4 → ENTRADA OBSOLETA, `continue`
+   heap vacío → FIN.
+```
+Resultado: `dist = [0, 3, 1, 4]`. ✅ El camino más barato a 1 **no** es el directo `0→1` (costo 4) sino `0→2→1` (1+2=**3**); y a 3 es `0→2→1→3` (1+2+1=**4**). Fíjate en los pasos 4 y 6: el heap contenía **entradas viejas** `(4,1)` y `(6,3)` que ya habían sido mejoradas; la guarda `if (costo > dist[nodo]) continue;` las descarta sin reprocesar. La operación clave `dist[nodo] + peso < dist[vecino]` se llama **relajación**.
+
+⚠️ **Riesgo de overflow con `Integer.MAX_VALUE`.** Inicializamos `dist` a `Integer.MAX_VALUE` como "infinito", pero entonces `dist[nodo] + peso` puede **desbordar** si `dist[nodo]` ya es (o está cerca de) `Integer.MAX_VALUE` y le sumas un peso: el resultado da **negativo** y la comparación `< dist[vecino]` se cumple por error, corrompiendo el cálculo. En el código de arriba esto **no ocurre** porque solo relajamos desde un `nodo` que salió del heap con `costo == dist[nodo]` finito (los nodos inalcanzables nunca se procesan como origen de relajación). Aun así, en variantes donde sí podrías sumar sobre infinito, usa un centinela más seguro (p. ej. un `long`, o un "infinito" como `Integer.MAX_VALUE / 2`) o comprueba `dist[nodo] != Integer.MAX_VALUE` antes de sumar.
 
 🅐.4 **Complejidad:** **O((V + E) log V)** con min-heap (cada arista puede provocar una inserción en el heap, y cada operación del heap es log V).
 
@@ -6560,7 +8185,41 @@ public static List<Integer> ordenTopologico(int n, int[][] aristas) {
 ```
 🗝️ **Clave doble:** (1) procesar por grado de entrada 0 da un orden válido; (2) si al final **no salieron todos los nodos**, es porque había un **ciclo** (esos nodos nunca llegaron a grado 0). Así, el mismo algoritmo **ordena Y detecta ciclos**.
 
-🅑.4 **Complejidad:** **O(V + E)**. **Señal:** "orden de tareas/cursos/compilación con prerrequisitos", "¿se pueden terminar todos los cursos?".
+🅑.4 **La variante DFS (post-orden + lista invertida).** Kahn usa BFS con grados de entrada; existe otra forma clásica con **DFS** que cae igual de seguido en entrevistas (y es la que muchos prefieren). La idea: haz DFS y, **cuando termines de explorar TODO lo que cuelga de un nodo** (es decir, cuando ya no le queden vecinos pendientes), **agrégalo a una lista**. Eso lo añade en **post-orden**. Como un nodo se "cierra" solo después que todos sus descendientes (las cosas que dependen de él), la lista queda en orden **inverso** al topológico → al final se **invierte** (o se usa una pila y se vacía).
+
+Para **detectar ciclos**, cada nodo lleva uno de tres estados (la técnica de los "tres colores"):
+- **blanco** (0) = sin visitar;
+- **gris** (1) = **en proceso** (estoy dentro de su DFS, en la pila de recursión actual);
+- **negro** (2) = terminado (ya cerrado y agregado).
+
+Si durante el DFS llegas a un nodo **gris**, encontraste una arista hacia un ancestro en la pila actual → **hay un ciclo** (no es un DAG, no existe orden topológico).
+```java
+public static List<Integer> ordenTopologicoDFS(int n, int[][] aristas) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    for (int[] a : aristas) g.get(a[0]).add(a[1]);   // a[0] -> a[1]
+    int[] estado = new int[n];                        // 0=blanco, 1=gris(en proceso), 2=negro
+    List<Integer> orden = new ArrayList<>();
+    for (int i = 0; i < n; i++)
+        if (estado[i] == 0 && !dfs(i, g, estado, orden))
+            return new ArrayList<>();                 // se detectó un ciclo → no hay orden
+    Collections.reverse(orden);                       // post-orden invertido = orden topológico
+    return orden;
+}
+private static boolean dfs(int u, List<List<Integer>> g, int[] estado, List<Integer> orden) {
+    estado[u] = 1;                                    // marca GRIS: en proceso
+    for (int v : g.get(u)) {
+        if (estado[v] == 1) return false;             // arista a un GRIS → ¡CICLO!
+        if (estado[v] == 0 && !dfs(v, g, estado, orden)) return false;
+    }
+    estado[u] = 2;                                    // marca NEGRO: terminado
+    orden.add(u);                                     // post-orden: se agrega al cerrar
+    return true;
+}
+```
+🗝️ **Las dos claves:** (1) agregar en **post-orden** y **invertir** garantiza que cada nodo aparece antes que sus dependientes; (2) el estado **gris** distingue un ciclo (volver a un nodo de la pila **actual**) de simplemente reencontrar un nodo ya **negro** (terminado por otra rama, lo cual es normal y no es ciclo). Kahn vs. DFS: dan resultados equivalentes (puede haber varios órdenes válidos); usa el que te resulte más natural.
+
+🅑.5 **Complejidad:** **O(V + E)** (ambas variantes). **Señal:** "orden de tareas/cursos/compilación con prerrequisitos", "¿se pueden terminar todos los cursos?".
 
 ---
 
@@ -6604,13 +8263,81 @@ Con ambas, `find` y `union` son **O(α(n))** — α es la función inversa de Ac
 
 ---
 
-### 🅓 Los demás (referencia para tenerlos todos)
+### 🅓 Tres algoritmos que sí debes saber explicar: Bellman-Ford, Floyd-Warshall, Kruskal
+
+Estos tres aparecen en entrevistas de fundamentos y completan el "kit" de grafos con pesos. Los enseñamos de verdad (no solo como fila de tabla).
+
+#### 🅓.1 Bellman-Ford — camino más corto que SÍ admite pesos negativos
+
+🏠 **El problema y la idea.** Dijkstra falla con pesos negativos (su lógica golosa "fija" un nodo y no lo revisa más). Bellman-Ford renuncia a ser goloso: en vez de elegir el nodo más barato, **relaja TODAS las aristas, una y otra vez**. ¿Cuántas veces? **V − 1**. La razón: el camino más corto sin ciclos tiene a lo más **V − 1 aristas**, y cada pasada completa de relajaciones "propaga" la mejora al menos una arista más a lo largo de cualquier camino. Tras V − 1 pasadas, todas las distancias mínimas están fijas.
+
+🔑 **Bonus que Dijkstra no da:** una pasada **extra** (la número V). Si en ella **todavía** se puede relajar alguna arista (mejorar una distancia), es porque existe un **ciclo de peso negativo** (un bucle que abarata sin fin) → no hay "camino más corto" bien definido. Bellman-Ford **detecta ciclos negativos**.
+```java
+public static int[] bellmanFord(int n, int[][] aristas, int origen) {
+    long[] dist = new long[n];                       // long para no desbordar al sumar
+    Arrays.fill(dist, Long.MAX_VALUE);
+    dist[origen] = 0;
+    for (int i = 1; i <= n - 1; i++)                  // V-1 pasadas
+        for (int[] e : aristas) {                     // e = {desde, hasta, peso}
+            if (dist[e[0]] != Long.MAX_VALUE && dist[e[0]] + e[2] < dist[e[1]])
+                dist[e[1]] = dist[e[0]] + e[2];        // relajación
+        }
+    for (int[] e : aristas)                            // pasada extra: ¿aún se relaja?
+        if (dist[e[0]] != Long.MAX_VALUE && dist[e[0]] + e[2] < dist[e[1]])
+            throw new IllegalStateException("Ciclo de peso negativo detectado");
+    int[] res = new int[n];
+    for (int i = 0; i < n; i++) res[i] = (int) dist[i];
+    return res;
+}
+```
+⏱️ **Complejidad:** **O(V · E)** (V−1 pasadas × E aristas). Más lento que Dijkstra (O((V+E)log V)), pero es el precio de admitir pesos negativos. **Cuándo:** hay aristas con peso negativo, o necesitas **detectar ciclos negativos** (p. ej. arbitraje de divisas).
+
+#### 🅓.2 Floyd-Warshall — el más corto entre TODOS los pares
+
+🏠 **El problema y la idea.** ¿Y si quieres la distancia mínima **entre cada par** de nodos a la vez (no desde un solo origen)? Floyd-Warshall es **DP sobre grafos**: parte de la matriz de distancias directas `d[i][j]` y, para cada nodo intermedio `k` (uno por uno), se pregunta *"¿llegar de i a j pasando por k sale más barato que el mejor camino que conocía?"*. La recurrencia es:
+> `d[i][j] = min(d[i][j], d[i][k] + d[k][j])`
+
+Tras considerar **todos** los `k` como posibles "paradas intermedias", `d[i][j]` contiene la distancia mínima real entre cada par. El orden de los bucles es sagrado: **`k` por fuera**, luego `i`, luego `j`.
+```java
+public static void floydWarshall(int[][] d) {        // d[i][j] = peso directo, o un INF si no hay arista
+    int n = d.length;
+    for (int k = 0; k < n; k++)                        // k = nodo intermedio (¡el bucle externo!)
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (d[i][k] != INF && d[k][j] != INF && d[i][k] + d[k][j] < d[i][j])
+                    d[i][j] = d[i][k] + d[k][j];        // mejorar i→j pasando por k
+}
+```
+⏱️ **Complejidad:** **O(V³)** tiempo (triple bucle) y O(V²) espacio (la matriz). **Cuándo:** grafos **pequeños y densos** donde necesitas **todos los pares** (p. ej. tablas de distancia precalculadas). Soporta pesos negativos (sin ciclos negativos). ⚠️ El bucle de `k` debe ir **por fuera**; si lo pones por dentro, la recurrencia usa intermedios aún no consolidados y da resultados incorrectos.
+
+#### 🅓.3 Kruskal — árbol de expansión mínima (MST) con Union-Find
+
+🏠 **El problema y la idea.** Quieres **conectar todos los nodos** con el **costo total mínimo** y sin ciclos: eso es un **árbol de expansión mínima (MST)**. Kruskal es maravillosamente simple y reúsa el **Union-Find** que ya enseñamos arriba (🅒): **ordena todas las aristas por peso de menor a mayor** y las va tomando una a una; toma una arista **solo si no crea un ciclo** (es decir, si sus dos extremos están en componentes distintos). Para saber "¿están en el mismo componente?" en tiempo casi O(1), usas exactamente `find`/`union` del Union-Find. Cuando ya conectaste los V nodos con V − 1 aristas, terminaste.
+
+> 🔑 Es **goloso y correcto**: tomar siempre la arista más barata que no cierra ciclo construye, demostrablemente, el árbol de menor costo total.
+```java
+public static int kruskalMST(int n, int[][] aristas) {   // aristas: {u, v, peso}
+    Arrays.sort(aristas, (a, b) -> Integer.compare(a[2], b[2]));  // 1) ordena por peso
+    UnionFind uf = new UnionFind(n);                      // 2) reusa el Union-Find de arriba (🅒)
+    int costoTotal = 0, usadas = 0;
+    for (int[] e : aristas) {
+        if (uf.union(e[0], e[1])) {                       // union devuelve true si NO había ciclo
+            costoTotal += e[2];                           //   → la arista entra al MST
+            if (++usadas == n - 1) break;                 // V-1 aristas: árbol completo
+        }
+    }
+    return costoTotal;
+}
+```
+⏱️ **Complejidad:** **O(E log E)** dominada por **ordenar las aristas** (las operaciones de Union-Find son casi O(1) amortizado, ver 🅒). **Cuándo:** "conectar N puntos al menor costo", redes, tendido de cable, clustering. **Kruskal vs. Prim:** Kruskal ordena aristas y usa Union-Find (gana en grafos **dispersos**); Prim crece desde un nodo con un min-heap (gana en grafos **densos**). Ambos dan un MST válido.
+
+### 🅔 Los demás (referencia para tenerlos todos)
 
 | Algoritmo | Para qué | Complejidad | Nota clave |
 |---|---|---|---|
-| **Bellman-Ford** | Camino más corto **con pesos negativos** | O(V·E) | Más lento que Dijkstra, pero soporta negativos y **detecta ciclos negativos** |
-| **Floyd-Warshall** | Camino más corto entre **TODOS los pares** | O(V³) | DP sobre grafos; sirve para grafos pequeños y densos |
-| **Kruskal (MST)** | Árbol de expansión **mínima** (conectar todo al menor costo) | O(E log E) | Ordena aristas + **Union-Find** para evitar ciclos |
+| **Bellman-Ford** *(enseñado en 🅓.1)* | Camino más corto **con pesos negativos** | O(V·E) | Más lento que Dijkstra, pero soporta negativos y **detecta ciclos negativos** |
+| **Floyd-Warshall** *(enseñado en 🅓.2)* | Camino más corto entre **TODOS los pares** | O(V³) | DP sobre grafos; sirve para grafos pequeños y densos |
+| **Kruskal (MST)** *(enseñado en 🅓.3)* | Árbol de expansión **mínima** (conectar todo al menor costo) | O(E log E) | Ordena aristas + **Union-Find** para evitar ciclos |
 | **Prim (MST)** | Árbol de expansión mínima | O(E log V) | Como Dijkstra pero con min-heap de aristas; crece desde un nodo |
 | **A*** | Camino más corto **con heurística** (videojuegos, mapas) | depende | Dijkstra + una estimación que guía hacia la meta (más rápido) |
 | **Tarjan / Kosaraju** | Componentes fuertemente conexos | O(V+E) | Para grafos dirigidos: grupos donde todos se alcanzan mutuamente |
@@ -6786,6 +8513,7 @@ Con ambas, `find` y `union` son **O(α(n))** — α es la función inversa de Ac
 **🧠 Qué necesitas saber:** la regla de orden del BST, la idea de descartar mitades, y el desbalance (cap. 6).
 **🗝️ Cómo pensarla:** relaciónalo con la búsqueda binaria: en cada nodo descartas medio árbol.
 **✅ Respuesta:** "Un **BST** es un árbol binario donde, para cada nodo, todo lo de su izquierda es **menor** y todo lo de su derecha es **mayor**. Por esa regla, al buscar puedes **descartar la mitad del árbol en cada paso** (si buscas algo menor, ignoras todo el subárbol derecho), igual que la búsqueda binaria → **O(log n)** si está balanceado. **Se degrada a O(n)** si insertas datos ya ordenados: todos caen de un lado y el árbol se vuelve una lista inclinada, sin mitades que descartar. Se evita con árboles **autobalanceados** (AVL, rojo-negro), que es lo que usa `TreeMap`."
+> **🔑 Convención de duplicados:** la definición clásica (y la que asume el validador de este banco, *Validar un BST* en §4.3) toma las claves como **únicas** y usa comparaciones **estrictas** `<`/`>` — un valor igual a un ancestro se considera inválido. Otras convenciones permiten iguales por un lado fijo (p. ej. duplicados a la derecha); si una entrevista lo permite, acláralo antes de codificar, porque cambia si usas `<` o `<=` en el validador.
 **⚠️ Trampas:** olvidar mencionar el desbalance (es justo lo que quieren ver que sabes).
 
 ### B6. "¿Qué es un heap y cuándo lo usarías?"
@@ -7000,23 +8728,32 @@ public static void moverCeros(int[] arr) {
 
 **🎯 Qué evalúan:** combinar **ordenar + dos punteros** y manejar duplicados; es un clásico de nivel medio.
 **🧠 Qué necesitas saber:** ordenar y dos punteros de extremos (Patrón 2).
-**🗝️ Cómo pensarla:** fuerza bruta = tres bucles (O(n³)). Mejor: **ordena**; fija un número con un bucle, y para el resto usa dos punteros (como Two Sum ordenado) buscando `-fijo`. O(n²).
-**✅ Solución (idea):**
+**🗝️ Cómo pensarla:** fuerza bruta = tres bucles (O(n³)). Mejor: **ordena**; fija un número con un bucle, y para el resto usa dos punteros (como Two Sum ordenado) buscando `-fijo`. O(n²). El verdadero reto no es encontrar los tríos, sino **no repetirlos**: ordenar pone los iguales juntos, así que basta con saltar valores ya usados en cada uno de los tres niveles.
+**✅ Solución:**
 ```java
-Arrays.sort(nums);
-for (int i = 0; i < nums.length - 2; i++) {
-    if (i > 0 && nums[i] == nums[i-1]) continue;          // evita tríos repetidos
-    int izq = i + 1, der = nums.length - 1, objetivo = -nums[i];
-    while (izq < der) {
-        int suma = nums[izq] + nums[der];
-        if (suma == objetivo) { /* guarda el trío; avanza ambos saltando duplicados */ izq++; der--; }
-        else if (suma < objetivo) izq++;
-        else der--;
+public static List<List<Integer>> threeSum(int[] nums) {
+    List<List<Integer>> res = new ArrayList<>();
+    Arrays.sort(nums);                                       // ordenar habilita dos punteros y juntar duplicados
+    for (int i = 0; i < nums.length - 2; i++) {
+        if (i > 0 && nums[i] == nums[i-1]) continue;         // (1) salta el FIJO si es igual al anterior
+        int izq = i + 1, der = nums.length - 1, objetivo = -nums[i];
+        while (izq < der) {
+            int suma = nums[izq] + nums[der];
+            if (suma == objetivo) {
+                res.add(Arrays.asList(nums[i], nums[izq], nums[der]));
+                while (izq < der && nums[izq] == nums[izq+1]) izq++;  // (2) salta duplicados por la IZQUIERDA
+                while (izq < der && nums[der] == nums[der-1]) der--;  // (3) salta duplicados por la DERECHA
+                izq++; der--;                                          // avanza ambos al siguiente par distinto
+            } else if (suma < objetivo) izq++;               // suma chica -> sube el menor
+            else der--;                                       // suma grande -> baja el mayor
+        }
     }
+    return res;
 }
-// O(n²) tiempo, O(1) espacio extra (sin contar el orden)
+// [-1,0,1,2,-1,-4] -> [[-1,-1,2],[-1,0,1]]   |  O(n²) tiempo, O(1) espacio extra (sin contar el orden ni la salida)
 ```
-**⚠️ Trampas:** olvidar saltar duplicados (genera tríos repetidos). El ordenamiento previo es lo que habilita los dos punteros.
+✍️ **Por qué los tres saltos:** sin el salto **(1)** del fijo, al haber dos `-1` arrancarías dos veces el mismo barrido y obtendrías `[-1,-1,2]` repetido. Sin **(2)** y **(3)**, tras hallar un trío, si el siguiente `nums[izq]` (o `nums[der]`) es idéntico volverías a formar el **mismo** trío con otra posición. Ordenar agrupa los iguales, y los tres `while`/`continue` garantizan que cada valor distinto se use una sola vez en cada nivel.
+**⚠️ Trampas:** olvidar cualquiera de los tres saltos de duplicados (genera tríos repetidos); usar un `Set` de listas para deduplicar "funciona" pero es un parche caro y delata que no entendiste la mecánica. El ordenamiento previo es lo que habilita los dos punteros. *Variante:* 3Sum Closest (el trío cuya suma más se acerca a un objetivo) usa el mismo esqueleto guardando la mejor diferencia.
 
 ### — Ventana deslizante —
 
@@ -7102,6 +8839,7 @@ public static int minRotado(int[] arr) {
 // [4,5,6,7,0,1,2] -> 0   |  O(log n)
 ```
 **⚠️ Trampa:** comparar con el extremo **izquierdo** en vez del derecho complica los casos; comparar con `arr[der]` es el método limpio.
+**⚠️ Follow-up clásico (LeetCode 154 — con duplicados):** este código es correcto y O(log n) **solo si no hay valores repetidos**. Con duplicados, el caso `arr[medio] == arr[der]` rompe el razonamiento: no puedes saber de qué lado está el mínimo (ej. `[3,3,1,3]` y `[3,1,3,3,3]`). La solución estándar añade una tercera rama `else if (arr[medio] == arr[der]) der--;` (descartas **un** candidato, seguro porque `arr[der]` tiene un gemelo en `medio`). Eso degrada el **peor caso a O(n)** (ej. `[1,1,1,1,1]`), porque ya no garantizas partir a la mitad. Mencionarlo es justo lo que el entrevistador quiere oír.
 
 ---
 ### — Listas enlazadas —
@@ -7184,7 +8922,7 @@ public static Nodo medio(Nodo cabeza) {
 }
 // O(n), O(1)  (una sola pasada, sin contar primero la longitud)
 ```
-**⚠️ Variante:** combina con "invertir la segunda mitad" para verificar si una lista es palíndromo en O(1) espacio.
+**⚠️ Variante:** combina con "invertir la segunda mitad" para verificar si una lista es palíndromo en O(1) espacio. **Nota — cuál de los dos centrales:** este código devuelve, en listas de longitud **par**, el **segundo** de los dos nodos centrales. Para el chequeo de palíndromo conviene quedarse con el **primer** central; lográs eso iniciando `rapido = cabeza.siguiente` (en lugar de `cabeza`), de modo que el `lento` quede una posición antes y la segunda mitad a invertir empiece limpia.
 
 ### — Pilas y Colas —
 
@@ -7212,15 +8950,29 @@ public static boolean valido(String s) {
 
 **🎯 Qué evalúan:** diseño de estructura — cómo obtener el mínimo en O(1) sin recorrer.
 **🧠 Qué necesitas saber:** que puedes llevar una **segunda pila** con los mínimos.
-**🗝️ Cómo pensarla:** mantén una pila auxiliar que en cada nivel guarda el mínimo **hasta ese punto**; al hacer push, apilas `min(nuevo, minActual)`; al pop, sacas de ambas. Así `getMin()` es solo mirar el tope de la auxiliar.
-**✅ Solución (idea):**
+**🗝️ Cómo pensarla:** mantén una pila auxiliar que en cada nivel guarda el mínimo **hasta ese punto**; al hacer push, apilas `min(nuevo, minActual)`; al pop, sacas de ambas. Así `getMin()` es solo mirar el tope de la auxiliar — todo en O(1).
+**✅ Solución (clase completa — dos pilas):**
 ```java
-Deque<Integer> pila = new ArrayDeque<>(), mins = new ArrayDeque<>();
-void push(int x){ pila.push(x); mins.push(mins.isEmpty()? x : Math.min(x, mins.peek())); }
-void pop(){ pila.pop(); mins.pop(); }
-int getMin(){ return mins.peek(); }   // O(1)
+class MinStack {
+    private final Deque<Integer> pila = new ArrayDeque<>();  // los valores reales
+    private final Deque<Integer> mins = new ArrayDeque<>();  // el mínimo en cada nivel
+
+    public void push(int x) {
+        pila.push(x);
+        // en cada nivel guarda el menor entre x y el mínimo previo
+        mins.push(mins.isEmpty() ? x : Math.min(x, mins.peek()));
+    }
+    public void pop() {                 // saca de AMBAS para mantenerlas sincronizadas
+        pila.pop();
+        mins.pop();
+    }
+    public int top()    { return pila.peek(); }   // O(1)
+    public int getMin() { return mins.peek(); }   // O(1): el tope de mins es el mínimo actual
+}
+// push(3),push(5),push(2): getMin()=2, top()=2 ; pop(): getMin()=3, top()=5   |  todas O(1)
 ```
-**⚠️ Trampa:** intentar calcular el mínimo recorriendo (O(n)). El truco es **precalcular** el mínimo por nivel.
+✍️ **Por qué `mins` espeja a `pila`:** ambas pilas crecen y decrecen juntas, así que `mins.peek()` siempre corresponde al mínimo de los elementos actualmente presentes. Cuando haces `pop` del valor que era el mínimo, su entrada en `mins` también sale y reaparece el mínimo anterior. **Espacio O(n)** por la segunda pila; el trade-off vale porque consigues `getMin()` en O(1).
+**⚠️ Trampa:** intentar calcular el mínimo recorriendo (O(n)) — el truco es **precalcular** el mínimo por nivel; y olvidar sacar de `mins` en el `pop` (las pilas se desincronizan y `getMin` miente). *Optimización de espacio:* la pila de mínimos puede guardar solo cuando llega un nuevo mínimo ≤ actual, pero la versión de dos pilas a la par es la más clara y la esperada.
 
 #### 🔹 Temperaturas diarias (pila monótona)
 
@@ -7364,8 +9116,34 @@ private static void hundir(char[][] g,int i,int j){
 **🎯 Qué evalúan:** reconocer dependencias como grafo dirigido y detectar ciclos (orden topológico).
 **🧠 Qué necesitas saber:** grafo dirigido, grados de entrada, algoritmo de Kahn (sección "Algoritmos de grafos con nombre").
 **🗝️ Cómo pensarla:** los cursos son nodos; "B requiere A" es una arista A→B. Se pueden tomar todos **si y solo si NO hay ciclo**. Aplica orden topológico (Kahn): si logras ordenar los `n` cursos, sí; si quedan cursos atrapados (ciclo), no.
-**✅ Solución (idea):** construye `gradoEntrada[]`, mete a una cola los de grado 0, ve "completando" y reduciendo grados; cuenta cuántos completaste. Si `completados == n` → true; si no, hay ciclo → false. **O(V+E).**
-**⚠️ Clave:** este problema **es** detección de ciclo en un grafo dirigido disfrazada.
+**✅ Solución (Kahn — grados de entrada + cola):**
+```java
+public static boolean puedeTerminar(int numCursos, int[][] prereqs) {
+    List<List<Integer>> ady = new ArrayList<>();          // ady.get(a) = cursos que dependen de a
+    for (int i = 0; i < numCursos; i++) ady.add(new ArrayList<>());
+    int[] gradoEntrada = new int[numCursos];              // cuántos prerrequisitos le faltan a cada curso
+    for (int[] p : prereqs) {                             // p = {curso, requisito}  =>  arista requisito -> curso
+        ady.get(p[1]).add(p[0]);
+        gradoEntrada[p[0]]++;
+    }
+    Queue<Integer> cola = new LinkedList<>();
+    for (int c = 0; c < numCursos; c++)
+        if (gradoEntrada[c] == 0) cola.add(c);           // cursos sin prerrequisitos: se pueden tomar ya
+    int completados = 0;
+    while (!cola.isEmpty()) {
+        int curso = cola.poll();
+        completados++;                                    // "tomar" este curso
+        for (int siguiente : ady.get(curso))             // libera a los que dependían de él
+            if (--gradoEntrada[siguiente] == 0) cola.add(siguiente);
+    }
+    return completados == numCursos;                      // si quedó alguno atrapado, hay ciclo
+}
+// numCursos=2, prereqs=[[1,0]]      -> true  (toma 0, luego 1)
+// numCursos=2, prereqs=[[1,0],[0,1]] -> false (0 y 1 se requieren mutuamente: ciclo)
+// O(V+E) tiempo, O(V+E) espacio
+```
+✍️ **Por qué funciona:** un curso solo entra a la cola cuando su grado de entrada llega a 0, es decir, cuando **todos** sus prerrequisitos ya fueron tomados. Si hay un ciclo, esos cursos nunca alcanzan grado 0 (siempre se esperan entre sí), nunca entran a la cola, y `completados` queda por debajo de `numCursos`.
+**⚠️ Clave:** este problema **es** detección de ciclo en un grafo dirigido disfrazada. *Alternativa:* DFS con tres estados (sin visitar / en proceso / terminado) — si durante el DFS encuentras un nodo "en proceso", hallaste un ciclo. *Follow-up:* "Course Schedule II" pide **devolver el orden** de los cursos → es el mismo Kahn, pero acumulas los `curso` en una lista a medida que los sacas de la cola.
 
 ### — Heaps —
 
@@ -7389,16 +9167,25 @@ public static int kMayor(int[] nums, int k) {
 
 **🎯 Qué evalúan:** combinar dos patrones (hashing + heap).
 **🧠 Qué necesitas saber:** Map de frecuencias + min-heap por frecuencia.
-**🗝️ Cómo pensarla:** (1) cuenta frecuencias con un Map; (2) mantén un min-heap de tamaño k **ordenado por frecuencia**, descartando el menos frecuente.
-**✅ Solución (idea):**
+**🗝️ Cómo pensarla:** (1) cuenta frecuencias con un Map; (2) mantén un min-heap de tamaño k **ordenado por frecuencia**, descartando el menos frecuente; (3) **vacía el heap** a la respuesta. El min-heap (no max) es clave: con tamaño k, el elemento menos frecuente siempre queda en la raíz listo para descartarse.
+**✅ Solución:**
 ```java
-Map<Integer,Integer> f = new HashMap<>();
-for (int n: nums) f.put(n, f.getOrDefault(n,0)+1);
-PriorityQueue<Integer> h = new PriorityQueue<>((a,b)->f.get(a)-f.get(b));
-for (int n: f.keySet()){ h.add(n); if (h.size()>k) h.poll(); }
-// los k más frecuentes quedan en h   |  O(n log k)
+public static int[] kMasFrecuentes(int[] nums, int k) {
+    Map<Integer,Integer> f = new HashMap<>();
+    for (int n : nums) f.put(n, f.getOrDefault(n,0)+1);          // (1) contar frecuencias
+    PriorityQueue<Integer> h = new PriorityQueue<>((a,b) -> f.get(a) - f.get(b)); // min-heap por frecuencia
+    for (int clave : f.keySet()) {                               // (2) heap de tamaño k
+        h.add(clave);
+        if (h.size() > k) h.poll();                              // saca el MENOS frecuente
+    }
+    int[] res = new int[k];                                      // (3) EXTRAE el resultado
+    for (int i = 0; i < k; i++) res[i] = h.poll();               // vacía el heap a la respuesta
+    return res;
+}
+// [1,1,1,2,2,3], k=2 -> [2,1] (o [1,2]: el orden no está garantizado)   |  O(n + m log k), m = nº de claves distintas
 ```
-**⚠️ Nota:** reconocer que es **hashing + heap** combinados es señal de madurez.
+✍️ **La extracción final (3) es lo que muchos olvidan:** sin vaciar el heap a un arreglo, "la respuesta queda en el heap" no es una respuesta utilizable. **Complejidad:** contar es O(n); el heap procesa `m` claves distintas con operaciones O(log k) → O(m log k); total **O(n + m log k)**. **El orden del resultado NO está garantizado** (un heap solo ordena la raíz); si pidieran orden por frecuencia, ordena el arreglo final aparte.
+**⚠️ Nota:** reconocer que es **hashing + heap** combinados es señal de madurez. *Variante O(n) (bucket sort):* coloca cada clave en un "balde" indexado por su frecuencia (0..n) y recórrelos de mayor a menor tomando k — evita el `log k` a cambio de O(n) espacio.
 
 ### — Recursión y Backtracking —
 
@@ -7425,17 +9212,58 @@ void backtrack(int[] nums, int inicio, List<Integer> actual, List<List<Integer>>
 
 **🎯 Qué evalúan:** backtracking con elementos "usados".
 **🧠 Qué necesitas saber:** la misma plantilla, con un arreglo `usado`.
-**🗝️ Cómo pensarla:** una permutación está completa cuando usa todos; en cada paso prueba cada elemento aún no usado.
-**✅ Solución (idea):** lleva `boolean[] usado`; si `actual.size()==n` guarda; si no, por cada `i` no usado: marca, agrega, recurre, desmarca y quita. **O(n!).**
-**⚠️ Clave:** mismo esqueleto que subconjuntos; solo cambian "¿qué es completa?" y "¿qué opciones hay?".
+**🗝️ Cómo pensarla:** una permutación está completa cuando usa todos; en cada paso prueba cada elemento aún no usado. A diferencia de los subconjuntos, **no** llevas un índice de inicio (puedes volver a elementos anteriores), pero sí un `usado[]` para no repetir un elemento dentro de la misma permutación.
+**✅ Solución (backtracking con `usado[]`):**
+```java
+public static List<List<Integer>> permutar(int[] nums) {
+    List<List<Integer>> res = new ArrayList<>();
+    backtrack(nums, new boolean[nums.length], new ArrayList<>(), res);
+    return res;
+}
+private static void backtrack(int[] nums, boolean[] usado,
+                             List<Integer> actual, List<List<Integer>> res) {
+    if (actual.size() == nums.length) {              // permutación completa
+        res.add(new ArrayList<>(actual));            // guarda una COPIA del estado
+        return;
+    }
+    for (int i = 0; i < nums.length; i++) {
+        if (usado[i]) continue;                      // ya está en esta permutación
+        usado[i] = true; actual.add(nums[i]);        // ELIGE
+        backtrack(nums, usado, actual, res);         // EXPLORA
+        usado[i] = false; actual.remove(actual.size()-1); // DESHAZ (ambas marcas)
+    }
+}
+// [1,2,3] -> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]   |  O(n·n!) tiempo
+```
+✍️ **Por qué O(n·n!):** hay `n!` permutaciones y copiar cada una al resultado cuesta O(n). **Clave:** mismo esqueleto "elige · explora · deshaz" que subconjuntos; solo cambian "¿qué es completa?" (`size()==n`) y "¿qué opciones hay?" (las no usadas).
+**⚠️ Trampa:** olvidar deshacer **ambas** marcas (`usado[i]=false` *y* el `remove`), o guardar `actual` por referencia en vez de una copia. *Variante:* "Permutations II" (con duplicados) ordena primero y salta `i` si `nums[i]==nums[i-1] && !usado[i-1]`.
 
 #### 🔹 Combination Sum (combinaciones que suman un objetivo)
 
 **🎯 Qué evalúan:** backtracking con poda (cuando te pasas del objetivo, corta).
 **🧠 Qué necesitas saber:** backtracking + poda.
-**🗝️ Cómo pensarla:** en cada paso, si la suma parcial **excede** el objetivo, abandona esa rama (poda); si lo iguala, guarda. Para permitir repetir un número, recurres con el **mismo** índice.
-**✅ Idea de poda:** `if (suma > objetivo) return;` y `if (suma == objetivo) { guarda; return; }` antes del bucle de opciones.
-**⚠️ Trampa:** no podar → explora ramas inútiles y se dispara el costo.
+**🗝️ Cómo pensarla:** en cada paso, si la suma parcial **excede** el objetivo, abandona esa rama (poda); si lo iguala, guarda. Para permitir **repetir** un número, recurres con el **mismo** índice; para no generar combinaciones que sean reordenamientos unas de otras, nunca retrocedes a índices anteriores (de ahí el `inicio`).
+**✅ Solución (backtracking con índice de inicio + poda):**
+```java
+public static List<List<Integer>> combinationSum(int[] candidatos, int objetivo) {
+    List<List<Integer>> res = new ArrayList<>();
+    backtrack(candidatos, objetivo, 0, new ArrayList<>(), res);
+    return res;
+}
+private static void backtrack(int[] cand, int restante, int inicio,
+                             List<Integer> actual, List<List<Integer>> res) {
+    if (restante == 0) { res.add(new ArrayList<>(actual)); return; } // suma exacta -> guarda copia
+    if (restante < 0) return;                                        // poda: nos pasamos
+    for (int i = inicio; i < cand.length; i++) {
+        actual.add(cand[i]);                                         // ELIGE
+        backtrack(cand, restante - cand[i], i, actual, res);         // EXPLORA (i, no i+1: permite repetir)
+        actual.remove(actual.size()-1);                              // DESHAZ
+    }
+}
+// [2,3,6,7], objetivo=7 -> [[2,2,3],[7]]   |  exponencial; la poda evita ramas inútiles
+```
+✍️ **Por qué `i` y no `i+1`:** recurrir con el **mismo** índice `i` permite usar `cand[i]` varias veces (`2+2+3`). Pasar `inicio=i` (en vez de 0) impide volver a candidatos anteriores, de modo que `[2,2,3]` y `[3,2,2]` no se generan ambas — solo la versión en orden no decreciente.
+**⚠️ Trampa:** no podar (`restante < 0`) → explora ramas inútiles y se dispara el costo; usar `i+1` en la recursión (eso prohíbe la reutilización, que es justo lo que pide el problema). *Variante:* "Combination Sum II" (cada candidato una sola vez, con duplicados en la entrada) recurre con `i+1` y salta `cand[i]==cand[i-1]` tras ordenar.
 
 ### — Programación dinámica —
 
@@ -7590,12 +9418,14 @@ public static int robar(int[] casas){
 | "par / duplicado / complemento / contar" | Hashing (Map/Set) |
 | "ordenado" + "par/objetivo", "palíndromo", "invertir" | Dos punteros |
 | "subarreglo/substring contiguo más largo/corto" | Ventana deslizante |
+| "subarreglo que suma K", "consultas de rango / suma acumulada" | Prefix sum (suma de prefijos) |
 | "ordenado" + "buscar", "minimiza valor factible" | Búsqueda binaria |
 | "todas las combinaciones/permutaciones/caminos" | Backtracking |
 | "árbol", "profundidad", "camino" | DFS (recursión) |
 | "nivel por nivel", "más corto sin pesos" | BFS (cola) |
 | "islas", "conexiones", "dependencias" | Grafos (BFS/DFS + visitados) |
-| "balanceado", "siguiente mayor" | Pila |
+| "balanceado", "anidamiento", "deshacer / atrás" | Pila |
+| "siguiente elemento mayor / menor", "temperaturas", "días hasta…" | Pila monótona |
 | "rangos", "reuniones", "fusionar" | Intervalos (ordenar por inicio) |
 | "K más grandes/frecuentes" | Heap (Top-K) |
 | "óptimo secuencial", "¿de cuántas formas?" | DP (memoización) |
@@ -7661,6 +9491,7 @@ public static int robar(int[] casas){
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 7.7 | 2026-06-19 | **Correcciones de auditoría — Parte 3, patrones 1–7.** (1) *Hashing:* corregida la afirmación de complejidad ("11.5 días" → ~16 min con supuesto coherente de 10⁹ ops/s). (2) *Dos punteros:* arreglada la celda rota de "Negativos" en la tabla de casos borde (`[-3,-1,2,5]`, obj 1 → `[1,2]`, justificación limpia); Three Sum ampliado con código completo y **salto de duplicados**; nota de overflow del comparador por resta ya existente en §0.13.5. (3) *Ventana deslizante:* guarda `if (k > arr.length) return -1` en `sumaMaxK` (antes reventaba con AIOOBE) + precondición. (4) *Búsqueda binaria:* añadido el **código completo** de "buscar en arreglo rotado" con el test "¿qué mitad está ordenada?" y traza verificada. (5) *Recursión:* añadido el snippet de **`fib` memoizado** (O(2ⁿ)→O(n)); notas de overflow de `factorial` (13! desborda int) e ineficiencia O(n²) de `invertir` con `substring`; tabla de casos borde. (6) *Backtracking:* tabla de casos borde (entrada vacía → `[[]]`). (7) *Recorrido de árboles:* subido al estándar de densidad — traza paso a paso de BFS por niveles (cola + resultado), caja de los **tres órdenes DFS** (pre/in/post con mnemónica y salida sobre el mismo árbol), bugs clásicos (capturar `cola.size()`, validar BST, `prev` int vs long), complejidad O(n) / O(h) / O(ancho), nota sobre la clase `Nodo`, tabla de casos borde; unificado "validar BST = inorden **estrictamente creciente**". |
 | 7.6 | 2026-06-19 | **Apéndice metodológico.** Añadida la sección final **APÉNDICE — Cómo se construyó este manual**: filosofía (isla desierta, honestidad sobre inflación, profundidad no negociable, lo básico primero), marco pedagógico (plantilla suprema por tema, plantilla tutor del banco, sistema de marcadores, interrelación), voz/estilo, arquitectura, método iterativo (calibrar muestra, entregas, auditorías estrictas, bucle con el dueño, registro), pipeline técnico (splice, no romper referencias), checklist de calidad para seguir editando, y un **playbook de 11 pasos + anti-patrones** para que futuros agentes construyan manuales así sobre otros temas. Añadido al índice. |
 | 7.5 | 2026-06-19 | **Capítulo 0 Java COMPLETO a profundidad máxima.** Añadida **0.15 Lambdas y Streams** (hueco detectado): el problema de pasar comportamiento, lambdas y su sintaxis, interfaces funcionales (Predicate/Function/Consumer/Supplier/Comparator) con programa, referencias a métodos (::), streams como tubería (fuente→intermedias→terminal), filter/map/reduce/collect/sorted/distinct con ejemplos y salida, streams vs bucles, uso en SDET (esperas, procesar WebElements), 7 ejercicios. Índice y nota de cierre actualizados. **Con esto las 16 secciones del Capítulo 0 (0.0-0.15) están a profundidad máxima, con programas completos y 4-7 ejercicios resueltos cada una.** |
 | 7.4 | 2026-06-19 | **Profundización cap. 0: 0.12 y 0.13.** **0.12 Genéricos** a fondo: seguridad de tipos con programa, por qué Integer no int, **clase genérica propia Caja<T> y Par<K,V>**, métodos genéricos, **límites <T extends Comparable<T>>**, comodines (? extends/super), type erasure, 6 ejercicios. **0.13 Esenciales** a fondo: static (con programa, qué puede y no un método static), **enums con atributos/métodos/constructor (Planeta)**, **equals/hashCode con demostración en HashSet**, inmutabilidad y final (los 3 usos), **Comparable y Comparator para ordenar objetos propios**, paquetes/imports, 7 ejercicios. Pendiente: 0.15 lambdas/streams (nuevo) + actualizar índice. |
